@@ -40,11 +40,15 @@ to quickly create a Cobra application.`,
 			fmt.Println(err)
 			return
 		}
-		sc := setcover(groups)
-		fmt.Println(len(sc))
-		// for _, r := range sc {
-		// 	fmt.Println(r.Title)
-		// }
+		covers := setcovers(groups)
+		for i, msc := range covers {
+			contribution := calculateContributions(msc)
+			fmt.Println("---Set Covers---")
+			fmt.Println(i)
+			for rIndex, r := range msc {
+				fmt.Printf("%v %v \n", contribution[rIndex], r.Title)
+			}
+		}
 	},
 }
 
@@ -62,7 +66,7 @@ func init() {
 	// setcoverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func setcover(groups []mb2.ReleaseGroup) []mb2.Release {
+func setcovers(groups []mb2.ReleaseGroup) [][]mb2.Release {
 	var releases []mb2.Release
 
 	for _, rg := range groups {
@@ -102,15 +106,7 @@ func setcover(groups []mb2.ReleaseGroup) []mb2.Release {
 			minsetcovers = append(minsetcovers, sc)
 		}
 	}
-	for i, msc := range minsetcovers {
-		contribution := calculateContributions(msc)
-		fmt.Println("---Set Covers---")
-		fmt.Println(i)
-		for rIndex, r := range msc {
-			fmt.Printf("%v %v \n", contribution[rIndex], r.Title)
-		}
-	}
-	return minsetcovers[0]
+	return minsetcovers
 }
 
 func removeDuplicateReleases(releases []mb2.Release) []mb2.Release {
