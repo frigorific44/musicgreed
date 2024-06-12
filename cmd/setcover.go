@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"slices"
 
+	"github.com/frigorific44/musicgreed/musicinfo"
 	"github.com/spf13/cobra"
 	mb2 "go.uploadedlobster.com/musicbrainzws2"
 )
@@ -32,7 +33,9 @@ to quickly create a Cobra application.`,
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		mbid := mb2.MBID(args[0])
-		artist, err := buildArtist(mbid)
+		client, stop := musicinfo.NewMGClient()
+		defer stop()
+		artist, err := musicinfo.BuildArtist(client, mbid)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -57,13 +60,6 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// setcoverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-func buildArtist(mbid mb2.MBID) (mb2.Artist, error) {
-	client := mb2.NewClient("musicgreed", "0.1")
-	filter := mb2.IncludesFilter{Includes: []string{"releases", "release-groups", "recordings"}}
-	artist, err := client.LookupArtist(mbid, filter)
-	return artist, err
 }
 
 func setcover(artist mb2.Artist) []mb2.Release {
