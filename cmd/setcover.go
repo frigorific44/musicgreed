@@ -35,12 +35,12 @@ to quickly create a Cobra application.`,
 		mbid := mb2.MBID(args[0])
 		client, stop := musicinfo.NewMGClient()
 		defer stop()
-		artist, err := musicinfo.BuildArtist(client, mbid)
+		groups, err := musicinfo.ReleaseGroupsByArtist(client, mbid)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		sc := setcover(artist)
+		sc := setcover(groups)
 		fmt.Println(len(sc))
 		// for _, r := range sc {
 		// 	fmt.Println(r.Title)
@@ -62,10 +62,10 @@ func init() {
 	// setcoverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func setcover(artist mb2.Artist) []mb2.Release {
+func setcover(groups []mb2.ReleaseGroup) []mb2.Release {
 	var releases []mb2.Release
 
-	for _, rg := range artist.ReleaseGroups {
+	for _, rg := range groups {
 		releases = append(releases, removeDuplicateReleases(rg.Releases)...)
 	}
 
