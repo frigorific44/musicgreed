@@ -56,28 +56,27 @@ func TestRemoveDuplicateReleases(t *testing.T) {
 func TestCoverPermutations(t *testing.T) {
 	cases := []struct {
 		TrackMap map[string][]int
-		Curr     []int
 		Want     [][]int
 	}{
 		{TrackMap: map[string][]int{
 			"a": {0},
 			"b": {1},
-		}, Curr: []int{}, Want: [][]int{{0, 1}}},
+		}, Want: [][]int{{0, 1}}},
 		{TrackMap: map[string][]int{
 			"a": {0, 1},
 			"b": {1, 0},
-		}, Curr: []int{}, Want: [][]int{{0}, {1}}},
+		}, Want: [][]int{{0}, {1}}},
 		{TrackMap: map[string][]int{
 			"a": {0},
 			"b": {1, 0},
 			"c": {1, 2},
-		}, Curr: []int{}, Want: [][]int{{0, 1}, {0, 2}}},
+		}, Want: [][]int{{0, 1}, {0, 2}}},
 	}
 
 	for _, c := range cases {
-		res := coverPermutations(c.TrackMap, c.Curr)
+		res := coverPermutations(c.TrackMap)
 		if len(res) != len(c.Want) {
-			t.Errorf(`coverPermutationsRecursive(%v, %v) = %v, wanted %v`, c.TrackMap, c.Curr, res, c.Want)
+			t.Errorf(`coverPermutationsRecursive(%v) = %v, wanted %v`, c.TrackMap, res, c.Want)
 			continue
 		}
 		resMap := make(map[string]bool)
@@ -90,7 +89,7 @@ func TestCoverPermutations(t *testing.T) {
 			s := fmt.Sprint(wCover)
 			_, ok := resMap[s]
 			if !ok {
-				t.Errorf(`coverPermutationsRecursive(%v, %v) = %v, wanted %v`, c.TrackMap, c.Curr, res, c.Want)
+				t.Errorf(`coverPermutationsRecursive(%v) = %v, wanted %v`, c.TrackMap, res, c.Want)
 				break
 			}
 		}
@@ -127,6 +126,6 @@ func BenchmarkCoverPermutations(b *testing.B) {
 		"z": {3, 8, 5, 2, 7},
 	}
 	for i := 0; i < b.N; i++ {
-		coverPermutations(trackMap, []int{})
+		coverPermutations(trackMap)
 	}
 }

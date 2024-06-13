@@ -35,11 +35,13 @@ to quickly create a Cobra application.`,
 		mbid := mb2.MBID(args[0])
 		client, stop := musicinfo.NewMGClient()
 		defer stop()
+		fmt.Println("Retrieving music...")
 		groups, err := musicinfo.ReleaseGroupsByArtist(client, mbid)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+		fmt.Println("Calculating set covers...")
 		covers := setcovers(groups)
 		for i, msc := range covers {
 			contribution := calculateContributions(msc)
@@ -88,7 +90,7 @@ func setcovers(groups []mb2.ReleaseGroup) [][]mb2.Release {
 		}
 	}
 
-	permutations := coverPermutations(trackMap, []int{})
+	permutations := coverPermutations(trackMap)
 	minima := int(^uint(0) >> 1)
 	for _, p := range permutations {
 		if len(p) < minima {
@@ -161,7 +163,11 @@ func removeDuplicateReleases(releases []mb2.Release) []mb2.Release {
 	return toReturn
 }
 
-func coverPermutations(trackMap map[string][]int, curr []int) [][]int {
+func coverPermutations(trackMap map[string][]int) [][]int {
+	return covPerRecursive(trackMap, []int{})
+}
+
+func covPerRecursive(trackMap map[string][]int, curr []int) [][]int {
 	var permutations [][]int
 
 	if len(trackMap) > 0 {
@@ -187,7 +193,7 @@ func coverPermutations(trackMap map[string][]int, curr []int) [][]int {
 					}
 				}
 			}
-			newPermutations := coverPermutations(newMap, newCurr)
+			newPermutations := covPerRecursive(newMap, newCurr)
 			permutations = append(permutations, newPermutations...)
 		}
 	} else {
