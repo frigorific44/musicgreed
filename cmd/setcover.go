@@ -88,7 +88,7 @@ func setcovers(groups []mb2.ReleaseGroup) [][]mb2.Release {
 		}
 	}
 
-	permutations := coverPermutationsRecursive(trackMap, []int{})
+	permutations := coverPermutations(trackMap, []int{})
 	minima := int(^uint(0) >> 1)
 	for _, p := range permutations {
 		if len(p) < minima {
@@ -161,7 +161,7 @@ func removeDuplicateReleases(releases []mb2.Release) []mb2.Release {
 	return toReturn
 }
 
-func coverPermutationsRecursive(trackMap map[string][]int, curr []int) [][]int {
+func coverPermutations(trackMap map[string][]int, curr []int) [][]int {
 	var permutations [][]int
 
 	if len(trackMap) > 0 {
@@ -187,7 +187,7 @@ func coverPermutationsRecursive(trackMap map[string][]int, curr []int) [][]int {
 					}
 				}
 			}
-			newPermutations := coverPermutationsRecursive(newMap, newCurr)
+			newPermutations := coverPermutations(newMap, newCurr)
 			permutations = append(permutations, newPermutations...)
 		}
 	} else {

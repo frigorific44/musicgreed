@@ -53,7 +53,7 @@ func TestRemoveDuplicateReleases(t *testing.T) {
 	}
 }
 
-func TestCoverPermutationsRecursive(t *testing.T) {
+func TestCoverPermutations(t *testing.T) {
 	cases := []struct {
 		TrackMap map[string][]int
 		Curr     []int
@@ -75,7 +75,7 @@ func TestCoverPermutationsRecursive(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		res := coverPermutationsRecursive(c.TrackMap, c.Curr)
+		res := coverPermutations(c.TrackMap, c.Curr)
 		if len(res) != len(c.Want) {
 			t.Errorf(`coverPermutationsRecursive(%v, %v) = %v, wanted %v`, c.TrackMap, c.Curr, res, c.Want)
 			continue
@@ -95,4 +95,8 @@ func TestCoverPermutationsRecursive(t *testing.T) {
 			}
 		}
 	}
+}
+
+func BenchmarkCoverPermutations(b *testing.B) {
+
 }
