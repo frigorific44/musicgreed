@@ -52,7 +52,7 @@ func ReleaseGroupsByArtist(client MGClient, artistID mb2.MBID) ([]mb2.ReleaseGro
 				rgByMBID[r.ReleaseGroup.ID] = rg
 			}
 		}
-		paginator = mb2.Paginator{Limit: paginator.Limit, Offset: paginator.Offset + result.Count}
+		paginator.Offset = paginator.Offset + len(result.Releases)
 	}
 	var groups []mb2.ReleaseGroup
 	for _, v := range rgByMBID {
