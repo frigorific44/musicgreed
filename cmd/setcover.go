@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"sync"
 
+	"github.com/frigorific44/musicgreed/concurrency"
 	"github.com/frigorific44/musicgreed/musicinfo"
 	"github.com/spf13/cobra"
 	mb2 "go.uploadedlobster.com/musicbrainzws2"
@@ -164,13 +166,29 @@ func removeDuplicateReleases(releases []mb2.Release) []mb2.Release {
 }
 
 func coverPermutations(trackMap map[string][]int) [][]int {
-	return covPerRecursive(trackMap, []int{})
+	var permutations [][]int
+	var wg sync.WaitGroup
+	var minima concurrency.RWInt
+	minima.Set(int(^uint(0) >> 1))
+	permChan := make(chan []int)
+	wg.Add(1)
+	go covPerRecursive(trackMap, []int{}, &minima, &wg, permChan)
+	go func() {
+		wg.Wait()
+		close(permChan)
+	}()
+	for p := range permChan {
+		permutations = append(permutations, p)
+	}
+	return permutations
 }
 
-func covPerRecursive(trackMap map[string][]int, curr []int) [][]int {
-	var permutations [][]int
-
+func covPerRecursive(trackMap map[string][]int, curr []int, minima *concurrency.RWInt, wg *sync.WaitGroup, res chan<- []int) {
+	defer wg.Done()
 	if len(trackMap) > 0 {
+		if len(curr) == minima.Get() {
+			return
+		}
 		var value []int
 		// Retrieve a pair to permute on.
 		for _, value = range trackMap {
@@ -193,14 +211,15 @@ func covPerRecursive(trackMap map[string][]int, curr []int) [][]int {
 					}
 				}
 			}
-			newPermutations := covPerRecursive(newMap, newCurr)
-			permutations = append(permutations, newPermutations...)
+			wg.Add(1)
+			go covPerRecursive(newMap, newCurr, minima, wg, res)
 		}
 	} else {
-		permutations = append(permutations, curr)
+		if len(curr) < minima.Get() {
+			minima.Set(len(curr))
+		}
+		res <- curr
 	}
-
-	return permutations
 }
 
 func calculateContributions(setcover []mb2.Release) []int {
