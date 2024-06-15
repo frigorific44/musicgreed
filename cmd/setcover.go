@@ -71,23 +71,21 @@ func init() {
 }
 
 func setcovers(groups []mb2.ReleaseGroup) [][]mb2.Release {
+	// Gather unique releases.
 	var releases []mb2.Release
-
 	for _, rg := range groups {
 		releases = append(releases, removeDuplicateReleases(rg.Releases)...)
 	}
 
 	trackMap := make(map[string][]int)
 	for i, r := range releases {
-		for _, m := range r.Media {
-			for _, t := range m.Tracks {
-				tReleases, ok := trackMap[t.Title]
-				if ok {
-					tReleases = append(tReleases, i)
-					trackMap[t.Title] = tReleases
-				} else {
-					trackMap[t.Title] = []int{i}
-				}
+		for _, t := range releaseTrackTitles(r) {
+			tReleases, ok := trackMap[t]
+			if ok {
+				tReleases = append(tReleases, i)
+				trackMap[t] = tReleases
+			} else {
+				trackMap[t] = []int{i}
 			}
 		}
 	}
@@ -117,14 +115,7 @@ func removeDuplicateReleases(releases []mb2.Release) []mb2.Release {
 	// Gather each release's track titles, sorted alphabetically.
 	rTracks := make(map[int][]string)
 	for i, r := range releases {
-		var tracks []string
-		for _, m := range r.Media {
-			for _, t := range m.Tracks {
-				tracks = append(tracks, t.Title)
-			}
-		}
-		slices.Sort(tracks)
-		rTracks[i] = tracks
+		rTracks[i] = releaseTrackTitles(r)
 	}
 	var groups [][]mb2.Release
 	// Each loop, form a group of releases with identical track titles.
