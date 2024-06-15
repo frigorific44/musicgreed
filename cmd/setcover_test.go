@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"math/rand"
 	"slices"
+	"strconv"
 	"testing"
 
 	mb2 "go.uploadedlobster.com/musicbrainzws2"
@@ -96,36 +98,32 @@ func TestCoverPermutations(t *testing.T) {
 	}
 }
 
-func BenchmarkCoverPermutations(b *testing.B) {
-	trackMap := map[string][]int{
-		"a": {1, 8, 4, 9, 3},
-		"b": {0, 9, 4, 7, 6},
-		"c": {9, 5, 0, 1, 2},
-		"d": {9, 3, 7, 6, 1},
-		"e": {4, 0, 6, 3, 2},
-		"f": {2, 4, 3, 5, 1},
-		"g": {7, 4, 2, 6, 9},
-		"h": {9, 1, 2, 5, 0},
-		"i": {7, 0, 5, 9, 3},
-		"j": {7, 1, 5, 9, 0},
-		"k": {5, 3, 0, 4, 9},
-		"l": {1, 3, 7, 5, 6},
-		"m": {4, 3, 6, 8, 7},
-		"n": {4, 2, 1, 9, 0},
-		"o": {9, 8, 4, 3, 5},
-		"p": {8, 9, 6, 4, 0},
-		"q": {9, 3, 7, 1, 2},
-		"r": {3, 8, 1, 0, 7},
-		"s": {5, 9, 1, 6, 2},
-		"t": {7, 0, 5, 4, 6},
-		"u": {7, 5, 3, 1, 6},
-		"v": {9, 4, 5, 2, 1},
-		"w": {3, 2, 1, 0, 5},
-		"x": {8, 4, 1, 9, 2},
-		"y": {3, 7, 1, 8, 4},
-		"z": {3, 8, 5, 2, 7},
+func genTrackMap(t int, r int) map[string][]int {
+	random := rand.New(rand.NewSource(99))
+	trackMap := make(map[string][]int)
+	for i := 0; i < t; i++ {
+		releases := random.Perm(r)[:random.Intn(r)]
+		trackMap[strconv.Itoa(i)] = releases
 	}
-	for i := 0; i < b.N; i++ {
-		coverPermutations(trackMap)
+	return trackMap
+}
+
+var cover_permutations_table = []struct {
+	tracks   int
+	releases int
+}{
+	{25, 10},
+	{50, 15},
+	{100, 20},
+}
+
+func BenchmarkCoverPermutations(b *testing.B) {
+	for _, v := range cover_permutations_table {
+		b.Run(fmt.Sprintf("%+v", v), func(b *testing.B) {
+			trackMap := genTrackMap(v.tracks, v.releases)
+			for i := 0; i < b.N; i++ {
+				coverPermutations(trackMap)
+			}
+		})
 	}
 }
