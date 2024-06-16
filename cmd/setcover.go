@@ -17,12 +17,18 @@ import (
 var setcoverCmd = &cobra.Command{
 	Use:   `setcover "MBID"`,
 	Short: "Compute the set cover for the complete song collection of an artist.",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long: `This command compute the minimal set of releases needed in a collection
+to contain every unique track released by an artist. In addition, the unique 
+contribution of each release it output to to assist a song collector's efforts.
+Available flags may help to filter out music tracks that aren't of concern, 
+depending on desired thoroughness:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+To discard live and remixed releases:
+musicgreed setcover "MBID" --dsec="live,remix"
+
+The previous command can only discard whole releases tagged as mentioned. To
+discard individual tracks that are parenthesized as an alternate version:
+musicgreed setcover "MBID" --dalt`,
 	Args: cobra.ExactArgs(1),
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		// Ensure any positional arguments correspond to a MBID
@@ -66,7 +72,10 @@ func init() {
 
 	// Local flags.
 	// setcoverCmd.Flags().Bool("dalt", false, "discards alternative recordings (mix, acoustic, extended, etc.)")
-	setcoverCmd.Flags().StringSlice("dsec", []string{}, "discard MusicBrainz secondary release group types (live, remix, demo, etc.)")
+	setcoverCmd.Flags().StringSlice("dsec", []string{},
+		"discard MusicBrainz secondary release group types (https://musicbrainz.org/doc/Release_Group/Type)",
+	)
+	setcoverCmd.Flags().Bool("dalt", false, "discard")
 }
 
 func filteredReleases(groups []mb2.ReleaseGroup, dSecTypes []string) []mb2.Release {
@@ -100,16 +109,16 @@ func setcovers(releases []mb2.Release) [][]mb2.Release {
 		}
 	}
 
-	permutations := coverPermutations(trackMap)
+	combinations := coverCombinations(trackMap)
 	minima := int(^uint(0) >> 1)
-	for _, p := range permutations {
+	for _, p := range combinations {
 		if len(p) < minima {
 			minima = len(p)
 		}
 	}
 
 	var minsetcovers [][]mb2.Release
-	for _, p := range permutations {
+	for _, p := range combinations {
 		if len(p) == minima {
 			var sc []mb2.Release
 			for _, i := range p {
@@ -166,8 +175,8 @@ func removeDuplicateReleases(releases []mb2.Release) []mb2.Release {
 	return toReturn
 }
 
-func coverPermutations(trackMap map[string][]int) [][]int {
-	var permutations [][]int
+func coverCombinations(trackMap map[string][]int) [][]int {
+	var combinations [][]int
 	var wg sync.WaitGroup
 	var minima concurrency.RWInt
 	minima.Set(int(^uint(0) >> 1))
@@ -179,9 +188,9 @@ func coverPermutations(trackMap map[string][]int) [][]int {
 		close(permChan)
 	}()
 	for p := range permChan {
-		permutations = append(permutations, p)
+		combinations = append(combinations, p)
 	}
-	return permutations
+	return combinations
 }
 
 func covPerRecursive(trackMap map[string][]int, curr []int, minima *concurrency.RWInt, wg *sync.WaitGroup, res chan<- []int) {

@@ -55,7 +55,7 @@ func TestRemoveDuplicateReleases(t *testing.T) {
 	}
 }
 
-func TestCoverPermutations(t *testing.T) {
+func TestCoverCombinations(t *testing.T) {
 	cases := []struct {
 		TrackMap map[string][]int
 		Want     [][]int
@@ -76,9 +76,9 @@ func TestCoverPermutations(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		res := coverPermutations(c.TrackMap)
+		res := coverCombinations(c.TrackMap)
 		if len(res) != len(c.Want) {
-			t.Errorf(`coverPermutationsRecursive(%v) = %v, wanted %v`, c.TrackMap, res, c.Want)
+			t.Errorf(`coverCombinations(%v) = %v, wanted %v`, c.TrackMap, res, c.Want)
 			continue
 		}
 		resMap := make(map[string]bool)
@@ -91,7 +91,7 @@ func TestCoverPermutations(t *testing.T) {
 			s := fmt.Sprint(wCover)
 			_, ok := resMap[s]
 			if !ok {
-				t.Errorf(`coverPermutationsRecursive(%v) = %v, wanted %v`, c.TrackMap, res, c.Want)
+				t.Errorf(`coverCombinations(%v) = %v, wanted %v`, c.TrackMap, res, c.Want)
 				break
 			}
 		}
@@ -108,7 +108,7 @@ func genTrackMap(t int, r int) map[string][]int {
 	return trackMap
 }
 
-var cover_permutations_table = []struct {
+var cover_combinations_table = []struct {
 	tracks   int
 	releases int
 }{
@@ -117,12 +117,12 @@ var cover_permutations_table = []struct {
 	{100, 20},
 }
 
-func BenchmarkCoverPermutations(b *testing.B) {
-	for _, v := range cover_permutations_table {
+func BenchmarkCoverCombinations(b *testing.B) {
+	for _, v := range cover_combinations_table {
 		b.Run(fmt.Sprintf("%+v", v), func(b *testing.B) {
 			trackMap := genTrackMap(v.tracks, v.releases)
 			for i := 0; i < b.N; i++ {
-				coverPermutations(trackMap)
+				coverCombinations(trackMap)
 			}
 		})
 	}
