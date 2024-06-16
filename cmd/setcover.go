@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"cmp"
 	"fmt"
 	"regexp"
 	"slices"
@@ -56,12 +57,15 @@ musicgreed setcover "MBID" --dalt`,
 
 		fmt.Println("Calculating set covers...")
 		covers := setcovers(filtered)
+		fmt.Println("---Set Covers---")
 		for i, msc := range covers {
-			contribution := calculateContributions(msc)
-			fmt.Println("---Set Covers---")
-			fmt.Println(i)
+			contribution := contributions(msc)
+			slices.SortFunc(contribution, func(a, b releaseContribution) int {
+				return -1 * cmp.Compare(a.Contribution, b.Contribution)
+			})
+			fmt.Println("Set Cover", i)
 			for rIndex, r := range msc {
-				fmt.Printf("%v %v \n", contribution[rIndex], r.Title)
+				fmt.Printf("%v %v \n", contribution[rIndex].Contribution, r.Title)
 			}
 		}
 	},
@@ -71,7 +75,6 @@ func init() {
 	rootCmd.AddCommand(setcoverCmd)
 
 	// Local flags.
-	// setcoverCmd.Flags().Bool("dalt", false, "discards alternative recordings (mix, acoustic, extended, etc.)")
 	setcoverCmd.Flags().StringSlice("dsec", []string{},
 		"discard MusicBrainz secondary release group types (https://musicbrainz.org/doc/Release_Group/Type)",
 	)
@@ -232,8 +235,13 @@ func covPerRecursive(trackMap map[string][]int, curr []int, minima *concurrency.
 	}
 }
 
-func calculateContributions(setcover []mb2.Release) []int {
-	contributions := make([]int, len(setcover))
+type releaseContribution struct {
+	mb2.Release
+	Contribution int
+}
+
+func contributions(setcover []mb2.Release) []releaseContribution {
+	contributions := make([]releaseContribution, len(setcover))
 
 	for i, release := range setcover {
 		otherTracks := make(map[string]bool)
@@ -253,7 +261,7 @@ func calculateContributions(setcover []mb2.Release) []int {
 				contribution += 1
 			}
 		}
-		contributions[i] = contribution
+		contributions[i] = releaseContribution{Release: release, Contribution: contribution}
 	}
 
 	return contributions
