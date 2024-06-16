@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/frigorific44/musicgreed/concurrency"
@@ -43,8 +44,12 @@ to quickly create a Cobra application.`,
 			fmt.Println(err)
 			return
 		}
+
+		discardTypes, _ := cmd.Flags().GetStringSlice("dsec")
+		filtered := filteredReleases(groups, discardTypes)
+
 		fmt.Println("Calculating set covers...")
-		covers := setcovers(groups)
+		covers := setcovers(filtered)
 		for i, msc := range covers {
 			contribution := calculateContributions(msc)
 			fmt.Println("---Set Covers---")
@@ -59,24 +64,29 @@ to quickly create a Cobra application.`,
 func init() {
 	rootCmd.AddCommand(setcoverCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// setcoverCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// setcoverCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// Local flags.
+	// setcoverCmd.Flags().Bool("dalt", false, "discards alternative recordings (mix, acoustic, extended, etc.)")
+	setcoverCmd.Flags().StringSlice("dsec", []string{}, "discard MusicBrainz secondary release group types (live, remix, demo, etc.)")
 }
 
-func setcovers(groups []mb2.ReleaseGroup) [][]mb2.Release {
+func filteredReleases(groups []mb2.ReleaseGroup, dSecTypes []string) []mb2.Release {
 	// Gather unique releases.
 	var releases []mb2.Release
+ReleaseGroupLoop:
 	for _, rg := range groups {
+		for _, dType := range dSecTypes {
+			for _, sType := range rg.SecondaryTypes {
+				if strings.EqualFold(dType, sType) {
+					continue ReleaseGroupLoop
+				}
+			}
+		}
 		releases = append(releases, removeDuplicateReleases(rg.Releases)...)
 	}
+	return releases
+}
 
+func setcovers(releases []mb2.Release) [][]mb2.Release {
 	trackMap := make(map[string][]int)
 	for i, r := range releases {
 		for _, t := range releaseTrackTitles(r) {
