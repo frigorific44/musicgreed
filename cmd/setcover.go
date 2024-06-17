@@ -52,8 +52,9 @@ musicgreed setcover "MBID" --dalt`,
 			return
 		}
 
-		discardTypes, _ := cmd.Flags().GetStringSlice("dsec")
-		filtered := filteredReleases(groups, discardTypes)
+		scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
+		// learnTracks(groups, &scc)
+		filtered := filteredReleases(groups, scc)
 
 		fmt.Println("Calculating set covers...")
 		covers := setcovers(filtered)
@@ -78,15 +79,32 @@ func init() {
 	setcoverCmd.Flags().StringSlice("dsec", []string{},
 		"discard MusicBrainz secondary release group types (https://musicbrainz.org/doc/Release_Group/Type)",
 	)
-	setcoverCmd.Flags().Bool("dalt", false, "discard")
+	setcoverCmd.Flags().Bool("dalt", false, "discard parenthesized alternative tracks (acoustic, remix, etc.)")
 }
 
-func filteredReleases(groups []mb2.ReleaseGroup, dSecTypes []string) []mb2.Release {
+type setCoverFlags struct {
+	DSec []string
+	DAlt bool
+}
+
+type setCoverConfig struct {
+	setCoverFlags
+	TitleSub    map[string]string
+	TitleIgnore map[string]bool
+}
+
+func packageSetCoverFlags(cmd *cobra.Command) setCoverFlags {
+	dSec, _ := cmd.Flags().GetStringSlice("dsec")
+	dAlt, _ := cmd.Flags().GetBool("dalt")
+	return setCoverFlags{DSec: dSec, DAlt: dAlt}
+}
+
+func filteredReleases(groups []mb2.ReleaseGroup, scc setCoverConfig) []mb2.Release {
 	// Gather unique releases.
 	var releases []mb2.Release
 ReleaseGroupLoop:
 	for _, rg := range groups {
-		for _, dType := range dSecTypes {
+		for _, dType := range scc.DSec {
 			for _, sType := range rg.SecondaryTypes {
 				if strings.EqualFold(dType, sType) {
 					continue ReleaseGroupLoop
@@ -277,3 +295,23 @@ func releaseTrackTitles(release mb2.Release) []string {
 	slices.Sort(tracks)
 	return tracks
 }
+
+// Embeds title substitutions (whens tracks are the same but titled differently),
+// as well as tracks to ignore into the configuration.
+// func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
+// 	var titles []string
+// 	for _, rg := range groups {
+// 		for _, r := range rg.Releases {
+// 			for _, m := range r.Media {
+// 				for _, t := range m.Tracks {
+// 					titles = append(titles, t.Title)
+// 				}
+// 			}
+// 		}
+// 	}
+// 	for _, t := range titles {
+// 		for _, other := range titles {
+// 			if scc.DAlt {}
+// 		}
+// 	}
+// }
