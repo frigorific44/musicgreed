@@ -57,10 +57,10 @@ musicgreed setcover "MBID" --dalt`,
 		filtered := filteredReleases(groups, scc)
 
 		fmt.Println("Calculating set covers...")
-		covers := setcovers(filtered)
+		covers := setcovers(filtered, scc)
 		fmt.Println("---Set Covers---")
 		for i, msc := range covers {
-			contribution := contributions(msc)
+			contribution := contributions(msc, scc)
 			slices.SortFunc(contribution, func(a, b releaseContribution) int {
 				return -1 * cmp.Compare(a.Contribution, b.Contribution)
 			})
@@ -111,15 +111,15 @@ ReleaseGroupLoop:
 				}
 			}
 		}
-		releases = append(releases, removeDuplicateReleases(rg.Releases)...)
+		releases = append(releases, removeDuplicateReleases(rg.Releases, scc)...)
 	}
 	return releases
 }
 
-func setcovers(releases []mb2.Release) [][]mb2.Release {
+func setcovers(releases []mb2.Release, scc setCoverConfig) [][]mb2.Release {
 	trackMap := make(map[string][]int)
 	for i, r := range releases {
-		for _, t := range releaseTrackTitles(r) {
+		for _, t := range releaseTrackTitles(r, scc) {
 			trackMap[t] = append(trackMap[t], i)
 		}
 	}
@@ -145,11 +145,11 @@ func setcovers(releases []mb2.Release) [][]mb2.Release {
 	return minsetcovers
 }
 
-func removeDuplicateReleases(releases []mb2.Release) []mb2.Release {
+func removeDuplicateReleases(releases []mb2.Release, scc setCoverConfig) []mb2.Release {
 	// Gather each release's track titles, sorted alphabetically.
 	rTracks := make(map[int][]string)
 	for i, r := range releases {
-		rTracks[i] = releaseTrackTitles(r)
+		rTracks[i] = releaseTrackTitles(r, scc)
 	}
 	var groups [][]mb2.Release
 	// Each loop, form a group of releases with identical track titles.
@@ -252,7 +252,7 @@ type releaseContribution struct {
 	Contribution int
 }
 
-func contributions(setcover []mb2.Release) []releaseContribution {
+func contributions(setcover []mb2.Release, scc setCoverConfig) []releaseContribution {
 	contributions := make([]releaseContribution, len(setcover))
 
 	for i, release := range setcover {
@@ -261,12 +261,12 @@ func contributions(setcover []mb2.Release) []releaseContribution {
 			if j == i {
 				continue
 			}
-			tracks := releaseTrackTitles(other)
+			tracks := releaseTrackTitles(other, scc)
 			for _, track := range tracks {
 				otherTracks[track] = true
 			}
 		}
-		tracks := releaseTrackTitles(release)
+		tracks := releaseTrackTitles(release, scc)
 		var contribution int
 		for _, track := range tracks {
 			if !otherTracks[track] {
@@ -279,11 +279,18 @@ func contributions(setcover []mb2.Release) []releaseContribution {
 	return contributions
 }
 
-func releaseTrackTitles(release mb2.Release) []string {
+func releaseTrackTitles(release mb2.Release, scc setCoverConfig) []string {
 	var tracks []string
 	for _, m := range release.Media {
 		for _, t := range m.Tracks {
-			tracks = append(tracks, t.Title)
+			if scc.TitleIgnore[t.Title] {
+				continue
+			}
+			if sub, ok := scc.TitleSub[t.Title]; ok {
+				tracks = append(tracks, sub)
+			} else {
+				tracks = append(tracks, t.Title)
+			}
 		}
 	}
 	slices.Sort(tracks)
