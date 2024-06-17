@@ -89,8 +89,7 @@ func TestCoverCombinations(t *testing.T) {
 		for _, wCover := range c.Want {
 			slices.Sort(wCover)
 			s := fmt.Sprint(wCover)
-			_, ok := resMap[s]
-			if !ok {
+			if !resMap[s] {
 				t.Errorf(`coverCombinations(%v) = %v, wanted %v`, c.TrackMap, res, c.Want)
 				break
 			}

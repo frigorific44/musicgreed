@@ -120,13 +120,7 @@ func setcovers(releases []mb2.Release) [][]mb2.Release {
 	trackMap := make(map[string][]int)
 	for i, r := range releases {
 		for _, t := range releaseTrackTitles(r) {
-			tReleases, ok := trackMap[t]
-			if ok {
-				tReleases = append(tReleases, i)
-				trackMap[t] = tReleases
-			} else {
-				trackMap[t] = []int{i}
-			}
+			trackMap[t] = append(trackMap[t], i)
 		}
 	}
 
@@ -275,7 +269,7 @@ func contributions(setcover []mb2.Release) []releaseContribution {
 		tracks := releaseTrackTitles(release)
 		var contribution int
 		for _, track := range tracks {
-			if _, ok := otherTracks[track]; !ok {
+			if !otherTracks[track] {
 				contribution += 1
 			}
 		}
