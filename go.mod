@@ -3,6 +3,7 @@ module github.com/frigorific44/musicgreed
 go 1.22.1
 
 require (
+	github.com/adrg/strutil v0.3.1
 	github.com/spf13/cobra v1.8.0
 	go.uploadedlobster.com/musicbrainzws2 v0.9.1
 )

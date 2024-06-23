@@ -8,8 +8,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/adrg/strutil"
+	"github.com/adrg/strutil/metrics"
 	"github.com/frigorific44/musicgreed/concurrency"
 	"github.com/frigorific44/musicgreed/musicinfo"
+	"github.com/frigorific44/musicgreed/prompt"
 	"github.com/spf13/cobra"
 	mb2 "go.uploadedlobster.com/musicbrainzws2"
 )
@@ -53,7 +56,7 @@ musicgreed setcover "MBID" --dalt`,
 		}
 
 		scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
-		// learnTracks(groups, &scc)
+		learnTracks(groups, &scc)
 		filtered := filteredReleases(groups, scc)
 
 		fmt.Println("Calculating set covers...")
@@ -79,7 +82,7 @@ func init() {
 	setcoverCmd.Flags().StringSlice("dsec", []string{},
 		"discard MusicBrainz secondary release group types (https://musicbrainz.org/doc/Release_Group/Type)",
 	)
-	setcoverCmd.Flags().Bool("dalt", false, "discard parenthesized alternative tracks (acoustic, remix, etc.)")
+	setcoverCmd.Flags().Bool("dalt", false, "discard parenthesized alternate tracks (acoustic, remix, etc.)")
 }
 
 type setCoverFlags struct {
@@ -299,20 +302,79 @@ func releaseTrackTitles(release mb2.Release, scc setCoverConfig) []string {
 
 // Embeds title substitutions (whens tracks are the same but titled differently),
 // as well as tracks to ignore into the configuration.
-// func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
-// 	var titles []string
-// 	for _, rg := range groups {
-// 		for _, r := range rg.Releases {
-// 			for _, m := range r.Media {
-// 				for _, t := range m.Tracks {
-// 					titles = append(titles, t.Title)
-// 				}
-// 			}
-// 		}
-// 	}
-// 	for _, t := range titles {
-// 		for _, other := range titles {
-// 			if scc.DAlt {}
-// 		}
-// 	}
-// }
+func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
+	subSets := make(map[string]map[string]bool)
+	ignore := make(map[string]bool)
+
+	titleSet := make(map[string]bool)
+	for _, rg := range groups {
+		for _, r := range rg.Releases {
+			for _, m := range r.Media {
+				for _, t := range m.Tracks {
+					titleSet[t.Title] = true
+				}
+			}
+		}
+	}
+
+	metric := metrics.NewLevenshtein()
+	metric.CaseSensitive = false
+	altExp := regexp.MustCompile(`.*(?:live|mix|extended|ext.|version|ver.|acoustic|\(.+\)).*`)
+
+	for t := range titleSet {
+		if scc.DAlt && altExp.MatchString(t) && prompt.BoolPrompt(fmt.Sprintf(`Is "%v" an alternate track?`, t), true) {
+			ignore[t] = true
+		} else {
+			for other := range titleSet {
+				if t == other {
+					continue
+				}
+				if strutil.Similarity(t, other, metric) > 0.5 {
+					// If only one title contains alt keywords
+					//// If DAlt, discard alt (with confirmation?)
+					//// Else, keep both
+					// Else, ask if the same.
+					if prompt.BoolPrompt(fmt.Sprintf(`Are tracks "%v" and "%v" equal?`, t, other), true) {
+						m1, ok1 := subSets[t]
+						m2, ok2 := subSets[other]
+						if ok1 && ok2 {
+							// Merge sets
+							for k := range m2 {
+								m1[k] = true
+							}
+							subSets[other] = m1
+						} else if ok1 {
+							m1[other] = true
+							subSets[other] = m1
+						} else if ok2 {
+							m2[t] = true
+							subSets[t] = m2
+						} else {
+							m := map[string]bool{t: true, other: true}
+							subSets[t] = m
+							subSets[other] = m
+						}
+					}
+				}
+			}
+		}
+		delete(titleSet, t)
+	}
+
+	sub := make(map[string]string)
+	for _, m := range subSets {
+		set := make([]string, 0, len(m))
+		for el := range m {
+			set = append(set, el)
+		}
+		slices.SortFunc(set, func(a, b string) int {
+			return -1 * cmp.Compare(len(a), len(b))
+		})
+		for _, el := range set {
+			sub[el] = set[0]
+		}
+	}
+
+	scc.TitleIgnore = ignore
+	scc.TitleSub = sub
+}
