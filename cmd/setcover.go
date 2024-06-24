@@ -68,8 +68,8 @@ musicgreed setcover "MBID" --dalt`,
 				return -1 * cmp.Compare(a.Contribution, b.Contribution)
 			})
 			fmt.Println("Set Cover", i)
-			for rIndex, r := range msc {
-				fmt.Printf("%v %v \n", contribution[rIndex].Contribution, r.Title)
+			for _, c := range contribution {
+				fmt.Printf("%v %v \n", c.Contribution, c.Title)
 			}
 		}
 	},
