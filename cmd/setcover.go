@@ -319,41 +319,49 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 
 	metric := metrics.NewLevenshtein()
 	metric.CaseSensitive = false
-	altExp := regexp.MustCompile(`.*(?:live|mix|extended|ext.|version|ver.|acoustic|\(.+\)).*`)
+	altExp := regexp.MustCompile(`(?i).*\(.*\b(?:live|mix|version|remix|extended|ver\.|ext\.|acoustic|piano)\b.*\).*`)
+	almostAltExp := regexp.MustCompile(`.*\(.+\).*`)
+	altTracks := make(map[string]bool)
 
 	for t := range titleSet {
-		if scc.DAlt && altExp.MatchString(t) && prompt.BoolPrompt(fmt.Sprintf(`Is "%v" an alternate track?`, t), true) {
-			ignore[t] = true
-		} else {
-			for other := range titleSet {
-				if t == other {
-					continue
-				}
-				if strutil.Similarity(t, other, metric) > 0.5 {
-					// If only one title contains alt keywords
-					//// If DAlt, discard alt (with confirmation?)
-					//// Else, keep both
-					// Else, ask if the same.
-					if prompt.BoolPrompt(fmt.Sprintf(`Are tracks "%v" and "%v" equal?`, t, other), true) {
-						m1, ok1 := subSets[t]
-						m2, ok2 := subSets[other]
-						if ok1 && ok2 {
-							// Merge sets
-							for k := range m2 {
-								m1[k] = true
-							}
-							subSets[other] = m1
-						} else if ok1 {
-							m1[other] = true
-							subSets[other] = m1
-						} else if ok2 {
-							m2[t] = true
-							subSets[t] = m2
-						} else {
-							m := map[string]bool{t: true, other: true}
-							subSets[t] = m
-							subSets[other] = m
+		if altExp.MatchString(t) || (almostAltExp.MatchString(t) && prompt.BoolPrompt(fmt.Sprint("Is this an alternate track: ", t), true)) {
+			altTracks[t] = true
+			if scc.DAlt {
+				ignore[t] = true
+				delete(titleSet, t)
+			}
+		}
+	}
+
+	for t := range titleSet {
+		for other := range titleSet {
+			if t == other || (altTracks[t] != altTracks[other]) {
+				continue
+			}
+			if strutil.Similarity(t, other, metric) > 0.5 {
+				// If only one title contains alt keywords
+				//// If DAlt, discard alt (with confirmation?)
+				//// Else, keep both
+				// Else, ask if the same.
+				if prompt.BoolPrompt(fmt.Sprintf(`Are tracks "%v" and "%v" equal?`, t, other), true) {
+					m1, ok1 := subSets[t]
+					m2, ok2 := subSets[other]
+					if ok1 && ok2 {
+						// Merge sets
+						for k := range m2 {
+							m1[k] = true
 						}
+						subSets[other] = m1
+					} else if ok1 {
+						m1[other] = true
+						subSets[other] = m1
+					} else if ok2 {
+						m2[t] = true
+						subSets[t] = m2
+					} else {
+						m := map[string]bool{t: true, other: true}
+						subSets[t] = m
+						subSets[other] = m
 					}
 				}
 			}
