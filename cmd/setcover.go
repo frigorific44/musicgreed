@@ -21,11 +21,11 @@ import (
 var setcoverCmd = &cobra.Command{
 	Use:   `setcover "MBID"`,
 	Short: "Compute the set cover for the complete song collection of an artist.",
-	Long: `This command compute the minimal set of releases needed in a collection
-to contain every unique track released by an artist. In addition, the unique 
-contribution of each release it output to to assist a song collector's efforts.
-Available flags may help to filter out music tracks that aren't of concern, 
-depending on desired thoroughness:
+	Long: `This command computes the minimal set of releases needed to contain
+every unique track released by an artist. In addition, the unique contribution of
+each release it output to to assist a song collector's efforts. Available flags
+may help to filter out music tracks that aren't of concern, depending on desired
+thoroughness:
 
 To discard live and remixed releases:
 musicgreed setcover "MBID" --dsec="live,remix"
