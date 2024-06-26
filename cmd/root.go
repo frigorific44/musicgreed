@@ -26,5 +26,5 @@ func Execute() {
 }
 
 func init() {
-
+	rootCmd.CompletionOptions.HiddenDefaultCmd = true
 }
