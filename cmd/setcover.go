@@ -18,10 +18,11 @@ import (
 )
 
 // setcoverCmd represents the setcover command
-var setcoverCmd = &cobra.Command{
-	Use:   `setcover "MBID"`,
-	Short: "Compute the set cover for the complete song collection of an artist.",
-	Long: `This command computes the minimal set of releases needed to contain
+func NewSetCoverCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   `setcover "MBID"`,
+		Short: "Compute the set cover for the complete song collection of an artist.",
+		Long: `This command computes the minimal set of releases needed to contain
 every unique track released by an artist. In addition, the unique contribution of
 each release it output to to assist a song collector's efforts. Available flags
 may help to filter out music tracks that aren't of concern, depending on desired
@@ -33,56 +34,54 @@ musicgreed setcover "MBID" --dsec="live,remix"
 The previous command can only discard whole releases tagged as mentioned. To
 discard individual tracks that are parenthesized as an alternate version:
 musicgreed setcover "MBID" --dalt`,
-	Args: cobra.ExactArgs(1),
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		// Ensure any positional arguments correspond to a MBID
-		re := regexp.MustCompile(`^[A-Fa-f0-9]{8}(-[A-Fa-f0-9]{4}){3}-[A-Fa-f0-9]{12}$`)
-		for _, a := range args {
-			if !re.MatchString(a) {
-				return fmt.Errorf(`value does not resemble MBID: %v`, a)
+		Args: cobra.ExactArgs(1),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Ensure any positional arguments correspond to a MBID
+			re := regexp.MustCompile(`^[A-Fa-f0-9]{8}(-[A-Fa-f0-9]{4}){3}-[A-Fa-f0-9]{12}$`)
+			for _, a := range args {
+				if !re.MatchString(a) {
+					return fmt.Errorf(`value does not resemble MBID: %v`, a)
+				}
 			}
-		}
-		return nil
-	},
-	Run: func(cmd *cobra.Command, args []string) {
-		mbid := mb2.MBID(args[0])
-		client, stop := musicinfo.NewMGClient()
-		defer stop()
-		fmt.Println("Retrieving music...")
-		groups, err := musicinfo.ReleaseGroupsByArtist(client, mbid)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
-		learnTracks(groups, &scc)
-		filtered := filteredReleases(groups, scc)
-
-		fmt.Println("Calculating set covers...")
-		covers := setcovers(filtered, scc)
-		fmt.Println("---Set Covers---")
-		for i, msc := range covers {
-			contribution := contributions(msc, scc)
-			slices.SortFunc(contribution, func(a, b releaseContribution) int {
-				return -1 * cmp.Compare(a.Contribution, b.Contribution)
-			})
-			fmt.Println("Set Cover", i)
-			for _, c := range contribution {
-				fmt.Printf("%v %v \n", c.Contribution, c.Title)
+			return nil
+		},
+		Run: func(cmd *cobra.Command, args []string) {
+			mbid := mb2.MBID(args[0])
+			client, stop := musicinfo.NewMGClient()
+			defer stop()
+			fmt.Println("Retrieving music...")
+			groups, err := musicinfo.ReleaseGroupsByArtist(client, mbid)
+			if err != nil {
+				fmt.Println(err)
+				return
 			}
-		}
-	},
-}
 
-func init() {
-	rootCmd.AddCommand(setcoverCmd)
+			scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
+			learnTracks(groups, &scc)
+			filtered := filteredReleases(groups, scc)
 
-	// Local flags.
-	setcoverCmd.Flags().StringSlice("dsec", []string{},
+			fmt.Println("Calculating set covers...")
+			covers := setcovers(filtered, scc)
+			fmt.Println("---Set Covers---")
+			for i, msc := range covers {
+				contribution := contributions(msc, scc)
+				slices.SortFunc(contribution, func(a, b releaseContribution) int {
+					return -1 * cmp.Compare(a.Contribution, b.Contribution)
+				})
+				fmt.Println("Set Cover", i)
+				for _, c := range contribution {
+					fmt.Printf("%v %v \n", c.Contribution, c.Title)
+				}
+			}
+		},
+	}
+
+	cmd.Flags().StringSlice("dsec", []string{},
 		"discard MusicBrainz secondary release group types (https://musicbrainz.org/doc/Release_Group/Type)",
 	)
-	setcoverCmd.Flags().Bool("dalt", false, "discard parenthesized alternate tracks (acoustic, remix, etc.)")
+	cmd.Flags().Bool("dalt", false, "discard parenthesized alternate tracks (acoustic, remix, etc.)")
+
+	return cmd
 }
 
 type setCoverFlags struct {
