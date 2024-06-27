@@ -68,10 +68,15 @@ musicgreed setcover "MBID" --dalt`,
 				slices.SortFunc(contribution, func(a, b releaseContribution) int {
 					return -1 * cmp.Compare(a.Contribution, b.Contribution)
 				})
-				fmt.Println("Set Cover", i)
+				fmt.Println(">Set Cover", i)
+				var titles []string
+				fmt.Println("Release Contributions:")
 				for _, c := range contribution {
 					fmt.Printf("%v %v \n", c.Contribution, c.Title)
+					titles = append(titles, c.Title)
 				}
+				fmt.Println("Release Titles:")
+				fmt.Println(strings.Join(titles, "; "))
 			}
 		},
 	}
@@ -186,6 +191,7 @@ func removeDuplicateReleases(releases []mb2.Release, scc setCoverConfig) []mb2.R
 	}
 	var toReturn []mb2.Release
 	// Select one release to reperesent each group.
+	// TODO: Way to set release region preference, or to somehow collate titles the releases may be known under
 	for _, g := range groups {
 		toReturn = append(toReturn, g[0])
 	}
@@ -299,7 +305,6 @@ func releaseTrackTitles(release mb2.Release, scc setCoverConfig) []string {
 	return tracks
 }
 
-// Handle long alt track parentheses causing tracks to look similar "Magic (Body Talkr remix)" and "One Hand (Body Talkr remix)" LEAGUES
 // "The Kids Are All Rebels 2.0" and "The Kids Are All Rebels" from Lenii
 
 // Embeds title substitutions (whens tracks are the same but titled differently),
@@ -321,7 +326,7 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 
 	metric := metrics.NewLevenshtein()
 	metric.CaseSensitive = false
-	altExp := regexp.MustCompile(`(?i)\(.*\b(?:live|mix|version|remix|extended|ver\.|ext\.|acoustic|piano)\b.*\)`)
+	altExp := regexp.MustCompile(`(?i)\(.*\b(?:live|mix|version|remix|extended|ver\.|ext\.|acoustic|piano|radio|instrumental)\b.*\)`)
 	almostAltExp := regexp.MustCompile(`.*\(.+\).*`)
 	altTracks := make(map[string]bool)
 
