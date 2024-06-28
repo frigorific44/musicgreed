@@ -49,7 +49,7 @@ func TestRemoveDuplicateReleases(t *testing.T) {
 		{Releases: []mb2.Release{r[0], r[2], r[3]}, ResultLen: 3},
 	}
 	for _, c := range cases {
-		if res := removeDuplicateReleases(c.Releases, setCoverConfig{}); len(res) != c.ResultLen {
+		if res := uniqueReleases(c.Releases, setCoverConfig{}); len(res) != c.ResultLen {
 			t.Errorf(`removeDuplicateReleases(%v) = %v, wanted %v result(s)`, c.Releases, res, c.ResultLen)
 		}
 	}

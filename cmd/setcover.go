@@ -57,11 +57,16 @@ musicgreed setcover "MBID" --dalt`,
 			}
 
 			scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
-			learnTracks(groups, &scc)
-			filtered := filteredReleases(groups, scc)
+			filtered := filterBySecondaryType(groups, scc)
+			learnTracks(filtered, &scc)
+			// remove duplicates
+			var releases []mb2.Release
+			for _, rg := range filtered {
+				releases = append(releases, uniqueReleases(rg.Releases, scc)...)
+			}
 
 			fmt.Println("Calculating set covers...")
-			covers := setcovers(filtered, scc)
+			covers := setcovers(releases, scc)
 			fmt.Println("---Set Covers---")
 			for i, msc := range covers {
 				contribution := contributions(msc, scc)
@@ -106,9 +111,8 @@ func packageSetCoverFlags(cmd *cobra.Command) setCoverFlags {
 	return setCoverFlags{DSec: dSec, DAlt: dAlt}
 }
 
-func filteredReleases(groups []mb2.ReleaseGroup, scc setCoverConfig) []mb2.Release {
-	// Gather unique releases.
-	var releases []mb2.Release
+func filterBySecondaryType(groups []mb2.ReleaseGroup, scc setCoverConfig) []mb2.ReleaseGroup {
+	var filtered []mb2.ReleaseGroup
 ReleaseGroupLoop:
 	for _, rg := range groups {
 		for _, dType := range scc.DSec {
@@ -118,9 +122,9 @@ ReleaseGroupLoop:
 				}
 			}
 		}
-		releases = append(releases, removeDuplicateReleases(rg.Releases, scc)...)
+		filtered = append(filtered, rg)
 	}
-	return releases
+	return filtered
 }
 
 func setcovers(releases []mb2.Release, scc setCoverConfig) [][]mb2.Release {
@@ -152,7 +156,7 @@ func setcovers(releases []mb2.Release, scc setCoverConfig) [][]mb2.Release {
 	return minsetcovers
 }
 
-func removeDuplicateReleases(releases []mb2.Release, scc setCoverConfig) []mb2.Release {
+func uniqueReleases(releases []mb2.Release, scc setCoverConfig) []mb2.Release {
 	// Gather each release's track titles, sorted alphabetically.
 	rTracks := make(map[int][]string)
 	for i, r := range releases {
