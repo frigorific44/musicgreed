@@ -46,17 +46,21 @@ musicgreed setcover "MBID" --dalt`,
 			return nil
 		},
 		Run: func(cmd *cobra.Command, args []string) {
+			scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
 			mbid := mb2.MBID(args[0])
 			client, stop := musicinfo.NewMGClient()
 			defer stop()
 			fmt.Println("Retrieving music...")
-			groups, err := musicinfo.ReleaseGroupsByArtist(client, mbid)
+			var status string
+			if scc.Official {
+				status = "official"
+			}
+			groups, err := musicinfo.ReleaseGroupsByArtist(client, mbid, status)
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
 
-			scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
 			filtered := filterBySecondaryType(groups, scc)
 			learnTracks(filtered, &scc)
 			// remove duplicates
@@ -90,13 +94,15 @@ musicgreed setcover "MBID" --dalt`,
 		"discard MusicBrainz secondary release group types (https://musicbrainz.org/doc/Release_Group/Type)",
 	)
 	cmd.Flags().Bool("dalt", false, "discard parenthesized alternate tracks (acoustic, remix, etc.)")
+	cmd.Flags().Bool("official", false, "only official releases (https://musicbrainz.org/doc/Release#Status)")
 
 	return cmd
 }
 
 type setCoverFlags struct {
-	DSec []string
-	DAlt bool
+	DSec     []string
+	DAlt     bool
+	Official bool
 }
 
 type setCoverConfig struct {
@@ -108,7 +114,8 @@ type setCoverConfig struct {
 func packageSetCoverFlags(cmd *cobra.Command) setCoverFlags {
 	dSec, _ := cmd.Flags().GetStringSlice("dsec")
 	dAlt, _ := cmd.Flags().GetBool("dalt")
-	return setCoverFlags{DSec: dSec, DAlt: dAlt}
+	official, _ := cmd.Flags().GetBool("official")
+	return setCoverFlags{DSec: dSec, DAlt: dAlt, Official: official}
 }
 
 func filterBySecondaryType(groups []mb2.ReleaseGroup, scc setCoverConfig) []mb2.ReleaseGroup {

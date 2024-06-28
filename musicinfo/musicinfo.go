@@ -28,11 +28,11 @@ func (mgc MGClient) MBTick() {
 	<-mgc.MBLimitter.C
 }
 
-func ReleaseGroupsByArtist(client MGClient, artistID mb2.MBID) ([]mb2.ReleaseGroup, error) {
+func ReleaseGroupsByArtist(client MGClient, artistID mb2.MBID, status string) ([]mb2.ReleaseGroup, error) {
 	rgByMBID := make(map[mb2.MBID]mb2.ReleaseGroup)
 	// Page through releases
 	paginator := mb2.DefaultPaginator()
-	rFilter := mb2.ReleaseFilter{ArtistMBID: artistID, Includes: []string{"release-groups", "media", "recordings"}}
+	rFilter := mb2.ReleaseFilter{ArtistMBID: artistID, Status: status, Includes: []string{"release-groups", "media", "recordings"}}
 	for {
 		client.MBTick()
 		result, err := client.MBClient.BrowseReleases(rFilter, paginator)
