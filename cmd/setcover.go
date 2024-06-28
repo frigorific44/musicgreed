@@ -349,7 +349,7 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 
 	metric := metrics.NewLevenshtein()
 	metric.CaseSensitive = false
-	altExp := regexp.MustCompile(`(?i)\(.*\b(?:live|mix|version|remix|extended|ver\.|ext\.|acoustic|piano|radio|instrumental|inst\.)\b.*\)`)
+	altExp := regexp.MustCompile(`(?i)\(.*\b(?:live|mix|version|remix|extended|ver|ext|acoustic|piano|radio|instrumental|inst)\b.*\)`)
 	almostAltExp := regexp.MustCompile(`.*\(.+\).*`)
 	altTracks := make(map[string]bool)
 
