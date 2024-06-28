@@ -35,21 +35,15 @@ The previous command can only discard whole releases tagged as mentioned. To
 discard individual tracks that are parenthesized as an alternate version:
 musicgreed setcover "MBID" --dalt`,
 		Args: cobra.ExactArgs(1),
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Ensure any positional arguments correspond to a MBID
-			re := regexp.MustCompile(`^[A-Fa-f0-9]{8}(-[A-Fa-f0-9]{4}){3}-[A-Fa-f0-9]{12}$`)
-			for _, a := range args {
-				if !re.MatchString(a) {
-					return fmt.Errorf(`value does not resemble MBID: %v`, a)
-				}
-			}
-			return nil
-		},
 		Run: func(cmd *cobra.Command, args []string) {
 			scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
-			mbid := mb2.MBID(args[0])
 			client, stop := musicinfo.NewMGClient()
 			defer stop()
+			mbid, idErr := artistMBID(client, args[0])
+			if idErr != nil {
+				fmt.Println("Artist ID could not be retrieved")
+				return
+			}
 			fmt.Println("Retrieving music...")
 			var status string
 			if scc.Official {
@@ -116,6 +110,21 @@ func packageSetCoverFlags(cmd *cobra.Command) setCoverFlags {
 	dAlt, _ := cmd.Flags().GetBool("dalt")
 	official, _ := cmd.Flags().GetBool("official")
 	return setCoverFlags{DSec: dSec, DAlt: dAlt, Official: official}
+}
+
+func artistMBID(client musicinfo.MGClient, query string) (mb2.MBID, error) {
+	re := regexp.MustCompile(`^[A-Fa-f0-9]{8}(-[A-Fa-f0-9]{4}){3}-[A-Fa-f0-9]{12}$`)
+	if re.MatchString(query) {
+		return mb2.MBID(query), nil
+	} else {
+		client.MBTick()
+		res, err := client.MBClient.SearchArtists(mb2.SearchFilter{Query: query}, mb2.DefaultPaginator())
+		if err != nil {
+			return mb2.MBID(""), err
+		} else {
+			return res.Artists[0].ID, nil
+		}
+	}
 }
 
 func filterBySecondaryType(groups []mb2.ReleaseGroup, scc setCoverConfig) []mb2.ReleaseGroup {
