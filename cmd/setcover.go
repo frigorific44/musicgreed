@@ -122,7 +122,10 @@ func artistMBID(client musicinfo.MGClient, query string) (mb2.MBID, error) {
 		if err != nil {
 			return mb2.MBID(""), err
 		} else {
-			return res.Artists[0].ID, nil
+			if len(res.Artists) > 0 {
+				return res.Artists[0].ID, nil
+			}
+			return mb2.MBID(""), fmt.Errorf(`not a MBID and nothing returned from search`)
 		}
 	}
 }
