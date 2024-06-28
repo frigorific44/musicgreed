@@ -302,7 +302,7 @@ func releaseTrackTitles(release mb2.Release, scc setCoverConfig) []string {
 	var tracks []string
 	for _, m := range release.Media {
 		for _, t := range m.Tracks {
-			if scc.TitleIgnore[t.Title] {
+			if scc.TitleIgnore[t.Title] || t.Recording.IsVideo {
 				continue
 			}
 			if sub, ok := scc.TitleSub[t.Title]; ok {
