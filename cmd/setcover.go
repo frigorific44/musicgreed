@@ -349,12 +349,10 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 
 	metric := metrics.NewLevenshtein()
 	metric.CaseSensitive = false
-	altExp := regexp.MustCompile(`(?i)\(.*\b(?:live|mix|version|remix|extended|ver|ext|acoustic|piano|radio|instrumental|inst)\b.*\)`)
-	almostAltExp := regexp.MustCompile(`.*\(.+\).*`)
 	altTracks := make(map[string]bool)
 
 	for t := range titleSet {
-		if altExp.MatchString(t) || (almostAltExp.MatchString(t) && prompt.BoolPrompt(fmt.Sprint("Is this an alternate track: ", t), true)) {
+		if musicinfo.AltTrackExp.MatchString(t) || (musicinfo.AlmostAltExp.MatchString(t) && prompt.BoolPrompt(fmt.Sprint("Is this an alternate track: ", t), true)) {
 			altTracks[t] = true
 			if scc.DAlt {
 				ignore[t] = true
@@ -370,8 +368,8 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 			}
 			if strutil.Similarity(t, other, metric) > 0.6 {
 				if altTracks[t] && altTracks[other] {
-					rootA := altExp.ReplaceAllLiteralString(t, "")
-					rootB := altExp.ReplaceAllLiteralString(other, "")
+					rootA := musicinfo.AltTrackExp.ReplaceAllLiteralString(t, "")
+					rootB := musicinfo.AltTrackExp.ReplaceAllLiteralString(other, "")
 					if strutil.Similarity(rootA, rootB, metric) <= 0.5 {
 						continue
 					}

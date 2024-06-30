@@ -2,9 +2,17 @@ package musicinfo
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	mb2 "go.uploadedlobster.com/musicbrainzws2"
+)
+
+var (
+	AltTrackTerms []string       = []string{"live", "mix", "version", "remix", "extended", "ver", "ext", "acoustic", "piano", "radio", "instrumental", "inst", "acapella"}
+	AltTrackExp   *regexp.Regexp = regexp.MustCompile(fmt.Sprintf(`(?i)\(.*\b(?:%v)\b.*\)`, strings.Join(AltTrackTerms, "|")))
+	AlmostAltExp  *regexp.Regexp = regexp.MustCompile(`.*\(.+\).*`)
 )
 
 type MGClient struct {

@@ -1,10 +1,39 @@
 package musicinfo
 
 import (
+	"fmt"
 	"testing"
 
 	"go.uploadedlobster.com/musicbrainzws2"
 )
+
+func TestAltTrackExp(t *testing.T) {
+	cases := []struct {
+		Format string
+		Want   bool
+	}{
+		{`%v`, false},
+		{`abc (abc%v)`, false},
+		{`abc (abc%vdef)`, false},
+		{`abc (%vabc)`, false},
+		{`abc (%v)`, true},
+		{`abc (abc %v)`, true},
+		{`abc (%v abc)`, true},
+		{`abc (abc %v def)`, true},
+		{`abc (%v.)`, true},
+		{`abc (abc %v.)`, true},
+		{`abc (%v. abc)`, true},
+		{`abc (abc %v. def)`, true},
+	}
+	for _, term := range AltTrackTerms {
+		for _, c := range cases {
+			m := fmt.Sprintf(c.Format, term)
+			if AltTrackExp.MatchString(m) != c.Want {
+				t.Errorf(`AltTrackExp returned %v on "%v", wanted %v`, !c.Want, m, c.Want)
+			}
+		}
+	}
+}
 
 func TestReleaseGroupsByArtistNotEmpty(t *testing.T) {
 	client, stop := NewMGClient()
