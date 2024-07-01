@@ -328,6 +328,20 @@ func releaseTrackTitles(release mb2.Release, scc setCoverConfig) []string {
 	return tracks
 }
 
+// Cleans the title for comparability without changing the meaning
+func CleanTitle(title string) string {
+	title = strings.ToLower(title)
+	return strings.Map(func(r rune) rune {
+		switch r {
+		case '’':
+			return '\''
+		case ',':
+			return -1
+		}
+		return r
+	}, title)
+}
+
 // "The Kids Are All Rebels 2.0" and "The Kids Are All Rebels" from Lenii
 
 // Embeds title substitutions (whens tracks are the same but titled differently),
@@ -374,26 +388,27 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 						continue
 					}
 				}
-				if prompt.BoolPrompt(fmt.Sprintf(`Are tracks "%v" and "%v" equal?`, t, other), true) {
-					m1, ok1 := subSets[t]
-					m2, ok2 := subSets[other]
-					if ok1 && ok2 {
-						// Merge sets
-						for k := range m2 {
-							m1[k] = true
-						}
-						subSets[other] = m1
-					} else if ok1 {
-						m1[other] = true
-						subSets[other] = m1
-					} else if ok2 {
-						m2[t] = true
-						subSets[t] = m2
-					} else {
-						m := map[string]bool{t: true, other: true}
-						subSets[t] = m
-						subSets[other] = m
+				if CleanTitle(t) != CleanTitle(other) && !prompt.BoolPrompt(fmt.Sprintf(`Are tracks "%v" and "%v" equal?`, t, other), true) {
+					continue
+				}
+				m1, ok1 := subSets[t]
+				m2, ok2 := subSets[other]
+				if ok1 && ok2 {
+					// Merge sets
+					for k := range m2 {
+						m1[k] = true
 					}
+					subSets[other] = m1
+				} else if ok1 {
+					m1[other] = true
+					subSets[other] = m1
+				} else if ok2 {
+					m2[t] = true
+					subSets[t] = m2
+				} else {
+					m := map[string]bool{t: true, other: true}
+					subSets[t] = m
+					subSets[other] = m
 				}
 			}
 		}
