@@ -12,7 +12,7 @@ import (
 var (
 	AltTrackTerms []string       = []string{"live", "mix", "version", "remix", "remixed", "extended", "ver", "ext", "acoustic", "piano", "radio", "instrumental", "inst", "acapella"}
 	AltTrackExp   *regexp.Regexp = regexp.MustCompile(fmt.Sprintf(`(?i)[-‐-―(].*\b(?:%v)\b.*`, strings.Join(AltTrackTerms, "|")))
-	AlmostAltExp  *regexp.Regexp = regexp.MustCompile(`[-‐-―(].*`)
+	AlmostAltExp  *regexp.Regexp = regexp.MustCompile(`(?:\s+[-‐-―]\s+.*|\(.+\))`)
 )
 
 type MGClient struct {

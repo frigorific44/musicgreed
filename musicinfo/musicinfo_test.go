@@ -35,6 +35,17 @@ func TestAltTrackExp(t *testing.T) {
 		{`abc - abc %v.`, true},
 		{`abc - %v. abc`, true},
 		{`abc - abc %v. def`, true},
+		{`abc-abc%v`, false},
+		{`abc-abc%vdef`, false},
+		{`abc-%vabc`, false},
+		{`abc-%v`, true},
+		{`abc-abc %v`, true},
+		{`abc-%v abc`, true},
+		{`abc-abc %v def`, true},
+		{`abc-%v.`, true},
+		{`abc-abc %v.`, true},
+		{`abc-%v. abc`, true},
+		{`abc-abc %v. def`, true},
 	}
 	for _, term := range AltTrackTerms {
 		for _, c := range cases {
@@ -42,6 +53,23 @@ func TestAltTrackExp(t *testing.T) {
 			if AltTrackExp.MatchString(m) != c.Want {
 				t.Errorf(`AltTrackExp returned %v on "%v", wanted %v`, !c.Want, m, c.Want)
 			}
+		}
+	}
+}
+
+func TestAlmostAltExp(t *testing.T) {
+	cases := []struct {
+		In   string
+		Want bool
+	}{
+		{`abc`, false},
+		{`abc (abc)`, true},
+		{`abc - abc`, true},
+		{`abc-abc`, false},
+	}
+	for _, c := range cases {
+		if AlmostAltExp.MatchString(c.In) != c.Want {
+			t.Errorf(`AlmostAltExp returned %v on "%v", wanted %v`, !c.Want, c.In, c.Want)
 		}
 	}
 }
