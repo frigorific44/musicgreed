@@ -35,17 +35,6 @@ func TestAltTrackExp(t *testing.T) {
 		{`abc - abc %v.`, true},
 		{`abc - %v. abc`, true},
 		{`abc - abc %v. def`, true},
-		{`abc-abc%v`, false},
-		{`abc-abc%vdef`, false},
-		{`abc-%vabc`, false},
-		{`abc-%v`, true},
-		{`abc-abc %v`, true},
-		{`abc-%v abc`, true},
-		{`abc-abc %v def`, true},
-		{`abc-%v.`, true},
-		{`abc-abc %v.`, true},
-		{`abc-%v. abc`, true},
-		{`abc-abc %v. def`, true},
 	}
 	for _, term := range AltTrackTerms {
 		for _, c := range cases {

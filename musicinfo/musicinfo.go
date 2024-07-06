@@ -11,8 +11,8 @@ import (
 
 var (
 	AltTrackTerms []string       = []string{"acapella", "acoustic", "demo", "ext", "extended", "inst", "instrumental", "live", "mix", "piano", "radio", "remix", "remixed", "ver", "version"}
-	AltTrackExp   *regexp.Regexp = regexp.MustCompile(fmt.Sprintf(`(?i)[-‐-―(].*\b(?:%v)\b.*`, strings.Join(AltTrackTerms, "|")))
-	AlmostAltExp  *regexp.Regexp = regexp.MustCompile(`(?:\s+[-‐-―]\s+.*|\(.+\))`)
+	AltTrackExp   *regexp.Regexp = regexp.MustCompile(fmt.Sprintf(`(?i)\s+[-‐-―]\s+.*\b(?:%[1]v)\b.*|\s+\p{Ps}.*\b(?:%[1]v)\b.*\p{Pe}`, strings.Join(AltTrackTerms, "|")))
+	AlmostAltExp  *regexp.Regexp = regexp.MustCompile(`\s+[-‐-―]\s+.*|\s+\p{Ps}.+\p{Pe}`)
 )
 
 type MGClient struct {

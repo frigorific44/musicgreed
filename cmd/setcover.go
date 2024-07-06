@@ -365,12 +365,17 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 	metric.CaseSensitive = false
 	altTracks := make(map[string]bool)
 
+	// Instead, check for existence of root in title set
 	for t := range titleSet {
-		if musicinfo.AltTrackExp.MatchString(t) || (musicinfo.AlmostAltExp.MatchString(t) && prompt.BoolPrompt(fmt.Sprint("Is this an alternate track: ", t), true)) {
-			altTracks[t] = true
-			if scc.DAlt {
-				ignore[t] = true
-				delete(titleSet, t)
+		if musicinfo.AlmostAltExp.MatchString(t) {
+			root := musicinfo.AlmostAltExp.ReplaceAllLiteralString(t, "")
+			if musicinfo.AltTrackExp.MatchString(t) ||
+				titleSet[root] && prompt.BoolPrompt(fmt.Sprint("Is this an alternate track: ", t), true) {
+				altTracks[t] = true
+				if scc.DAlt {
+					ignore[t] = true
+					delete(titleSet, t)
+				}
 			}
 		}
 	}
