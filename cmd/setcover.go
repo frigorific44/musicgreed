@@ -3,6 +3,7 @@ package cmd
 import (
 	"cmp"
 	"fmt"
+	"log/slog"
 	"regexp"
 	"slices"
 	"strings"
@@ -367,16 +368,25 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 
 	// Instead, check for existence of root in title set
 	for t := range titleSet {
+		var manual bool
 		if musicinfo.AlmostAltExp.MatchString(t) {
 			root := musicinfo.AlmostAltExp.ReplaceAllLiteralString(t, "")
-			if musicinfo.AltTrackExp.MatchString(t) ||
-				titleSet[root] && prompt.BoolPrompt(fmt.Sprint("Is this an alternate track: ", t), true) {
+			if musicinfo.AltTrackExp.MatchString(t) && titleSet[root] {
 				altTracks[t] = true
-				if scc.DAlt {
-					ignore[t] = true
-					delete(titleSet, t)
-				}
+				manual = false
+			} else if prompt.BoolPrompt(fmt.Sprint("Is this an alternate track: ", t), true) {
+				altTracks[t] = true
+				manual = true
 			}
+		}
+		if altTracks[t] && scc.DAlt {
+			slog.Debug(
+				"track marked as an alternate",
+				"title", t,
+				"manual", manual,
+			)
+			ignore[t] = true
+			delete(titleSet, t)
 		}
 	}
 
