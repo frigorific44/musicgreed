@@ -13,10 +13,10 @@ func NewRootCmd() *cobra.Command {
 		Version: "v0.1.0",
 		Use:     "musicgreed",
 		Short:   "A command-line tool to aid in collecting music.",
-		Long: `MusicGreed aims to speed up efforts to build a complete digital music
-collection. This is done by using "setcover" to calculate a collection goal for a
-music artist, or "remainder" to calculate the set cover on the tracks missing from a
-current collection (feature to come).`,
+		Long: "MusicGreed aims to speed up efforts to build a complete digital music " +
+			"collection. This is done by using `setcover` to calculate a collection " +
+			"goal for a music artist, or `remainder` to calculate the set cover on the " +
+			"tracks missing from a current collection (feature to come).",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Configure the logger
 			if lout, _ := cmd.Flags().GetString("output"); lout != "" {

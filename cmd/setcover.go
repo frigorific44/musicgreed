@@ -23,18 +23,17 @@ func NewSetCoverCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   `setcover artist`,
 		Short: "Compute the set cover for the complete song collection of an artist.",
-		Long: `This command computes the minimal set of releases needed to contain
-every unique track released by an artist. In addition, the unique contribution of
-each release it output to to assist a song collector's efforts. Available flags
-may help to filter out music tracks that aren't of concern, depending on desired
-thoroughness:
-
-To discard live and remixed releases:
-musicgreed setcover --dsec="live,remix" artist 
-
-The previous command can only discard whole releases tagged as mentioned. To
-discard individual tracks that are parenthesized as an alternate version:
-musicgreed setcover --dalt artist`,
+		Long: "This command computes the minimal set of releases needed to contain every " +
+			"unique track released by an artist. In addition, the unique contribution of " +
+			"each release it output to assist a song collector's efforts. Available " +
+			"flags may help to filter out music tracks that aren't of concern, depending " +
+			"on desired thoroughness." +
+			"\n\nTo discard live and remixed releases:" +
+			"\n`musicgreed setcover --dsec=\"live,remix\" artist`" +
+			"\n\nThe previous command can only discard whole releases tagged as " +
+			"mentioned. To discard individual tracks that are parenthesized as an " +
+			"alternate version:" +
+			"\n\n`musicgreed setcover --dalt artist`",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
