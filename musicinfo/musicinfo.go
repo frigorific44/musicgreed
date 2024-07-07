@@ -3,6 +3,7 @@ package musicinfo
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 
@@ -10,9 +11,19 @@ import (
 )
 
 var (
-	AltTrackTerms []string       = []string{"acapella", "acoustic", "demo", "ext", "extended", "inst", "instrumental", "live", "mix", "piano", "radio", "remix", "remixed", "ver", "version"}
-	AltTrackExp   *regexp.Regexp = regexp.MustCompile(fmt.Sprintf(`(?i)\s+[-‐-―]\s+.*\b(?:%[1]v)\b.*|\s+\p{Ps}.*\b(?:%[1]v)\b.*\p{Pe}`, strings.Join(AltTrackTerms, "|")))
-	AlmostAltExp  *regexp.Regexp = regexp.MustCompile(`\s+[-‐-―]\s+.*|\s+\p{Ps}.+\p{Pe}`)
+	AltTrackTermGroups map[string][]string = map[string][]string{
+		"Latin":    {"acapella", "acoustic", "demo", "ext", "extended", "inst", "instrumental", "live", "mix", "piano", "radio", "remix", "remixed", "ver", "version"},
+		"Cyrillic": {"акустика", "версия", "инструментал", "радио"},
+	}
+	AltTrackExp *regexp.Regexp = regexp.MustCompile(
+		strings.Join([]string{
+			fmt.Sprintf(
+				`(?i)\s+[-‐-―].*\PL(?:%[1]v)(?:\PL|$).*|\s+\p{Ps}(?:.*\PL)?(?:%[1]v)(?:\PL.*)?\p{Pe}`,
+				strings.Join(slices.Concat(AltTrackTermGroups["Latin"], AltTrackTermGroups["Cyrillic"]), "|"),
+			),
+		}, "|"),
+	)
+	AlmostAltExp *regexp.Regexp = regexp.MustCompile(`\s+[-‐-―]\s+.*|\s*\p{Ps}.+\p{Pe}`)
 )
 
 type MGClient struct {

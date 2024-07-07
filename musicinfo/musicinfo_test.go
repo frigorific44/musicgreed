@@ -36,11 +36,13 @@ func TestAltTrackExp(t *testing.T) {
 		{`abc - %v. abc`, true},
 		{`abc - abc %v. def`, true},
 	}
-	for _, term := range AltTrackTerms {
-		for _, c := range cases {
-			m := fmt.Sprintf(c.Format, term)
-			if AltTrackExp.MatchString(m) != c.Want {
-				t.Errorf(`AltTrackExp returned %v on "%v", wanted %v`, !c.Want, m, c.Want)
+	for _, group := range AltTrackTermGroups {
+		for _, term := range group {
+			for _, c := range cases {
+				m := fmt.Sprintf(c.Format, term)
+				if AltTrackExp.MatchString(m) != c.Want {
+					t.Errorf(`AltTrackExp returned %v on "%v", wanted %v`, !c.Want, m, c.Want)
+				}
 			}
 		}
 	}
