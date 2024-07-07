@@ -33,7 +33,7 @@ type MGClient struct {
 
 func NewMGClient() (MGClient, func()) {
 	client := MGClient{
-		MBClient:   mb2.NewClient("musicgreed", "0.1"),
+		MBClient:   mb2.NewClient("musicgreed", "v0.1.0"),
 		MBLimitter: time.NewTicker(time.Second),
 	}
 	return client, client.Stop

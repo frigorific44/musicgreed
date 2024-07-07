@@ -10,8 +10,9 @@ import (
 // rootCmd represents the base command when called without any subcommands
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "musicgreed",
-		Short: "A command-line tool to aid in collecting music.",
+		Version: "v0.1.0",
+		Use:     "musicgreed",
+		Short:   "A command-line tool to aid in collecting music.",
 		Long: `MusicGreed aims to speed up efforts to build a complete digital music
 collection. This is done by using "setcover" to calculate a collection goal for a
 music artist, or "remainder" to calculate the set cover on the tracks missing from a
