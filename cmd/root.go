@@ -19,18 +19,22 @@ func NewRootCmd() *cobra.Command {
 			"tracks missing from a current collection (feature to come).",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			// Configure the logger
+			slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
 			if lout, _ := cmd.Flags().GetString("output"); lout != "" {
 				file, err := os.OpenFile(lout, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 				if err == nil {
 					slog.SetDefault(slog.New(slog.NewJSONHandler(file, &slog.HandlerOptions{Level: slog.LevelDebug})))
-					return
+				} else {
+					slog.Error(
+						"opening output file returned an error",
+						"output_path", lout,
+					)
 				}
-				slog.Error(
-					"opening output file returned an error",
-					"output_path", lout,
-				)
 			}
-			slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
+			slog.Debug(
+				"command called",
+				"command", os.Args,
+			)
 		},
 	}
 
@@ -52,4 +56,8 @@ func Execute(rootCmd *cobra.Command) {
 	if err != nil {
 		os.Exit(1)
 	}
+}
+
+func ConfigureLogger() {
+
 }
