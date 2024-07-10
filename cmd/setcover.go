@@ -68,7 +68,7 @@ func NewSetCoverCmd() *cobra.Command {
 			fmt.Println("---Set Covers---")
 			for i, msc := range covers {
 				contribution := contributions(msc, scc)
-				slices.SortFunc(contribution, func(a, b releaseContribution) int {
+				slices.SortFunc(contribution, func(a, b coverContribution) int {
 					return -1 * cmp.Compare(a.Contribution, b.Contribution)
 				})
 				fmt.Println(">Set Cover", i)
@@ -80,6 +80,9 @@ func NewSetCoverCmd() *cobra.Command {
 				}
 				fmt.Println("Release Titles:")
 				fmt.Println(strings.Join(titles, "; "))
+				slog.Debug(
+					fmt.Sprint("set cover result", i),
+					"set cover", contribution)
 			}
 		},
 	}
@@ -278,13 +281,15 @@ func covPerRecursive(trackMap map[string][]int, curr []int, minima *concurrency.
 	}
 }
 
-type releaseContribution struct {
-	mb2.Release
+type coverContribution struct {
+	Title        string
+	ID           mb2.MBID
+	Tracks       []string
 	Contribution int
 }
 
-func contributions(setcover []mb2.Release, scc setCoverConfig) []releaseContribution {
-	contributions := make([]releaseContribution, len(setcover))
+func contributions(setcover []mb2.Release, scc setCoverConfig) []coverContribution {
+	contributions := make([]coverContribution, len(setcover))
 
 	for i, release := range setcover {
 		otherTracks := make(map[string]bool)
@@ -304,7 +309,11 @@ func contributions(setcover []mb2.Release, scc setCoverConfig) []releaseContribu
 				contribution += 1
 			}
 		}
-		contributions[i] = releaseContribution{Release: release, Contribution: contribution}
+		contributions[i] = coverContribution{
+			Title:        release.Title,
+			ID:           release.ID,
+			Tracks:       tracks,
+			Contribution: contribution}
 	}
 
 	return contributions
@@ -382,8 +391,7 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 			slog.Debug(
 				"track marked as an alternate",
 				"title", t,
-				"manual", manual,
-			)
+				"manual", manual)
 			ignore[t] = true
 			delete(titleSet, t)
 		}
@@ -431,6 +439,9 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 
 	sub := make(map[string]string)
 	for _, m := range subSets {
+		slog.Debug(
+			"titles determined to be equivalent",
+			"set", m)
 		set := make([]string, 0, len(m))
 		for el := range m {
 			set = append(set, el)
