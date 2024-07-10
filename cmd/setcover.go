@@ -68,7 +68,11 @@ func NewSetCoverCmd() *cobra.Command {
 			for i, msc := range covers {
 				contribution := contributions(msc, scc)
 				slices.SortFunc(contribution, func(a, b coverContribution) int {
-					return -1 * cmp.Compare(a.Contribution, b.Contribution)
+					conComp := cmp.Compare(a.Contribution, b.Contribution)
+					if conComp == 0 {
+						return cmp.Compare(a.Title, b.Title)
+					}
+					return -1 * conComp
 				})
 				fmt.Println("\n> Set Cover", i)
 				horizontal := "―――――――――――――――――――――――――"
