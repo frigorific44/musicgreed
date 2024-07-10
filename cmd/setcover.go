@@ -65,18 +65,25 @@ func NewSetCoverCmd() *cobra.Command {
 
 			fmt.Println("Calculating set covers...")
 			covers := setcovers(releases, scc)
-			fmt.Println("---Set Covers---")
 			for i, msc := range covers {
 				contribution := contributions(msc, scc)
 				slices.SortFunc(contribution, func(a, b coverContribution) int {
 					return -1 * cmp.Compare(a.Contribution, b.Contribution)
 				})
-				fmt.Println(">Set Cover", i)
+				fmt.Println("\n> Set Cover", i)
+				horizontal := "―――――――――――――――――――――――――"
+				fmt.Println(horizontal)
 				var titles []string
-				fmt.Println("Release Contributions:")
-				for _, c := range contribution {
-					fmt.Printf("%v %v \n", c.Contribution, c.Title)
+				fmt.Println("Contribution | Release(s)")
+				fmt.Println(horizontal)
+				var currTitles []string
+				for conI, c := range contribution {
+					currTitles = append(currTitles, c.Title)
 					titles = append(titles, c.Title)
+					if conI+1 == len(contribution) || contribution[conI+1].Contribution != c.Contribution {
+						fmt.Printf("%-14v %v\n", c.Contribution, strings.Join(currTitles, "; "))
+						currTitles = nil
+					}
 				}
 				fmt.Println("Release Titles:")
 				fmt.Println(strings.Join(titles, "; "))
