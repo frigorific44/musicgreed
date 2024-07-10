@@ -4,7 +4,6 @@ import (
 	"cmp"
 	"fmt"
 	"log/slog"
-	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -16,6 +15,14 @@ import (
 	"github.com/frigorific44/musicgreed/prompt"
 	"github.com/spf13/cobra"
 	mb2 "go.uploadedlobster.com/musicbrainzws2"
+)
+
+const (
+	tableHeader string = "Contribution | Release(s)"
+)
+
+var (
+	horizontal string = strings.Repeat("—", len(tableHeader))
 )
 
 // setcoverCmd represents the setcover command
@@ -75,10 +82,9 @@ func NewSetCoverCmd() *cobra.Command {
 					return -1 * conComp
 				})
 				fmt.Println("\n> Set Cover", i)
-				horizontal := "―――――――――――――――――――――――――"
 				fmt.Println(horizontal)
 				var titles []string
-				fmt.Println("Contribution | Release(s)")
+				fmt.Println(tableHeader)
 				fmt.Println(horizontal)
 				var currTitles []string
 				for conI, c := range contribution {
@@ -127,8 +133,7 @@ func packageSetCoverFlags(cmd *cobra.Command) setCoverFlags {
 }
 
 func artistMBID(client musicinfo.MGClient, query string) (mb2.MBID, error) {
-	re := regexp.MustCompile(`^[A-Fa-f0-9]{8}(-[A-Fa-f0-9]{4}){3}-[A-Fa-f0-9]{12}$`)
-	if re.MatchString(query) {
+	if musicinfo.MBIDExp.MatchString(query) {
 		return mb2.MBID(query), nil
 	} else {
 		client.MBTick()
@@ -361,8 +366,6 @@ func CleanTitle(title string) string {
 		return r
 	}, title)
 }
-
-// "The Kids Are All Rebels 2.0" and "The Kids Are All Rebels" from Lenii
 
 // Embeds title substitutions (whens tracks are the same but titled differently),
 // as well as tracks to ignore into the configuration.

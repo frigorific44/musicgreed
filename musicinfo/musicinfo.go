@@ -11,6 +11,7 @@ import (
 )
 
 var (
+	MBIDExp            *regexp.Regexp      = regexp.MustCompile(`^[A-Fa-f0-9]{8}(-[A-Fa-f0-9]{4}){3}-[A-Fa-f0-9]{12}$`)
 	AltTrackTermGroups map[string][]string = map[string][]string{
 		"Latin":    {"acapella", "acoustic", "demo", "ext", "extended", "inst", "instrumental", "live", "mix", "piano", "radio", "remix", "remixed", "ver", "version"},
 		"Cyrillic": {"акустика", "версия", "инструментал", "радио"},
