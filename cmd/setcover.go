@@ -273,10 +273,16 @@ func minCombosRecursive(
 		}
 
 		// Retrieve an entry to permute on.
-		var value []int
-		for _, value = range trackMap {
-			break
+		keys := make([]string, len(trackMap))
+		i := 0
+		for k := range trackMap {
+			keys[i] = k
+			i++
 		}
+		slices.SortFunc(keys, func(a, b string) int {
+			return cmp.Compare(len(trackMap[a]), len(trackMap[b]))
+		})
+		value := trackMap[keys[0]]
 		for _, r := range value {
 			newCurr := append(curr, r)
 			// Copy map
