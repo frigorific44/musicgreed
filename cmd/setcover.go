@@ -271,14 +271,14 @@ func minCombosRecursive(
 		if len(curr) == minima.Get() {
 			return
 		}
+
+		// Retrieve an entry to permute on.
 		var value []int
-		// Retrieve a pair to permute on.
 		for _, value = range trackMap {
 			break
 		}
 		for _, r := range value {
-			newCurr := curr
-			newCurr = append(newCurr, r)
+			newCurr := append(curr, r)
 			// Copy map
 			newMap := make(map[string][]int)
 			for k, v := range trackMap {
