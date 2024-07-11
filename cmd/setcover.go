@@ -272,12 +272,6 @@ func minCombosRecursive(
 			return
 		}
 
-		mapCopy := make(map[string][]int)
-		for k, v := range trackMap {
-			mapCopy[k] = v
-		}
-		trackMap = mapCopy
-
 		// Retrieve the rarest entry to permute on.
 		keys := make([]string, len(trackMap))
 		i := 0
