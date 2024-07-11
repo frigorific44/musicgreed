@@ -173,25 +173,17 @@ func setcovers(releases []mb2.Release, scc setCoverConfig) [][]mb2.Release {
 		}
 	}
 
-	combinations := coveringCombinations(trackMap)
-	minima := int(^uint(0) >> 1)
-	for _, p := range combinations {
-		if len(p) < minima {
-			minima = len(p)
-		}
-	}
+	combinations := minimalCombinations(trackMap)
 
-	var minsetcovers [][]mb2.Release
+	var covers [][]mb2.Release
 	for _, p := range combinations {
-		if len(p) == minima {
-			var sc []mb2.Release
-			for _, i := range p {
-				sc = append(sc, releases[i])
-			}
-			minsetcovers = append(minsetcovers, sc)
+		var sc []mb2.Release
+		for _, i := range p {
+			sc = append(sc, releases[i])
 		}
+		covers = append(covers, sc)
 	}
-	return minsetcovers
+	return covers
 }
 
 func uniqueReleases(releases []mb2.Release, scc setCoverConfig) []mb2.Release {
@@ -240,7 +232,7 @@ func uniqueReleases(releases []mb2.Release, scc setCoverConfig) []mb2.Release {
 	return toReturn
 }
 
-func coveringCombinations(trackMap map[string][]int) [][]int {
+func minimalCombinations(trackMap map[string][]int) [][]int {
 	var combinations [][]int
 	var wg sync.WaitGroup
 	var minima concurrency.RWInt
@@ -248,7 +240,7 @@ func coveringCombinations(trackMap map[string][]int) [][]int {
 	comboChan := make(chan []int)
 
 	wg.Add(1)
-	go coveringCombosRecursive(trackMap, []int{}, &minima, &wg, comboChan)
+	go minCombosRecursive(trackMap, []int{}, &minima, &wg, comboChan)
 	go func() {
 		wg.Wait()
 		close(comboChan)
@@ -267,7 +259,7 @@ func coveringCombinations(trackMap map[string][]int) [][]int {
 	return combinations
 }
 
-func coveringCombosRecursive(
+func minCombosRecursive(
 	trackMap map[string][]int,
 	curr []int,
 	minima *concurrency.RWInt,
@@ -302,7 +294,7 @@ func coveringCombosRecursive(
 				}
 			}
 			wg.Add(1)
-			go coveringCombosRecursive(newMap, newCurr, minima, wg, results)
+			go minCombosRecursive(newMap, newCurr, minima, wg, results)
 		}
 	} else {
 		results <- curr

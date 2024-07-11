@@ -55,7 +55,7 @@ func TestRemoveDuplicateReleases(t *testing.T) {
 	}
 }
 
-func TestCoverCombinations(t *testing.T) {
+func TestMinimalCombinations(t *testing.T) {
 	cases := []struct {
 		TrackMap map[string][]int
 		Want     [][]int
@@ -76,7 +76,7 @@ func TestCoverCombinations(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		res := coveringCombinations(c.TrackMap)
+		res := minimalCombinations(c.TrackMap)
 		if len(res) != len(c.Want) {
 			t.Errorf(`coverCombinations(%v) = %v, wanted %v`, c.TrackMap, res, c.Want)
 			continue
@@ -121,7 +121,7 @@ func BenchmarkCoverCombinations(b *testing.B) {
 		b.Run(fmt.Sprintf("%+v", v), func(b *testing.B) {
 			trackMap := genTrackMap(v.tracks, v.releases)
 			for i := 0; i < b.N; i++ {
-				coveringCombinations(trackMap)
+				minimalCombinations(trackMap)
 			}
 		})
 	}
