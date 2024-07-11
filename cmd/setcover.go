@@ -254,6 +254,13 @@ func coveringCombinations(trackMap map[string][]int) [][]int {
 		close(comboChan)
 	}()
 	for c := range comboChan {
+		if len(c) > minima.Get() {
+			continue
+		}
+		if len(c) < minima.Get() {
+			combinations = nil
+			minima.Set(len(c))
+		}
 		combinations = append(combinations, c)
 	}
 
@@ -298,9 +305,6 @@ func coveringCombosRecursive(
 			go coveringCombosRecursive(newMap, newCurr, minima, wg, results)
 		}
 	} else {
-		if len(curr) < minima.Get() {
-			minima.Set(len(curr))
-		}
 		results <- curr
 	}
 }
