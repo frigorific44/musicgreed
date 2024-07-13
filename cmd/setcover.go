@@ -286,7 +286,9 @@ func minCombosRecursive(
 
 		// Combine on the releases for selected entry
 		for _, r := range value {
-			newCurr := append(curr, r)
+			newCurr := make([]int, len(curr))
+			copy(newCurr, curr)
+			newCurr = append(newCurr, r)
 			// Copy map
 			newMap := make(map[string][]int)
 			for k, v := range trackMap {
