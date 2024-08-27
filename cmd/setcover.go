@@ -81,7 +81,8 @@ func NewSetCoverCmd() *cobra.Command {
 					}
 					return -1 * conComp
 				})
-				fmt.Println("\n> Set Cover", i)
+				fmt.Print("\n> Set Cover ", i)
+				fmt.Println(",", len(contribution), "releases")
 				fmt.Println(horizontal)
 				var titles []string
 				fmt.Println(tableHeader)
@@ -95,7 +96,7 @@ func NewSetCoverCmd() *cobra.Command {
 						currTitles = nil
 					}
 				}
-				fmt.Println("Release Titles:")
+				fmt.Println("\nRelease Titles:")
 				fmt.Println(strings.Join(titles, "; "))
 				slog.Debug(
 					fmt.Sprint("set cover result", i),
