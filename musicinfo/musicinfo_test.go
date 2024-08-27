@@ -65,6 +65,47 @@ func TestAlmostAltExp(t *testing.T) {
 	}
 }
 
+func TestNotAltExp(t *testing.T) {
+	cases := []struct {
+		Format string
+		Want   bool
+	}{
+		{`%v`, false},
+		{`abc (abc%v)`, false},
+		{`abc (abc%vdef)`, false},
+		{`abc (%vabc)`, false},
+		{`abc (%v)`, true},
+		{`abc (abc %v)`, false},
+		{`abc (%v abc)`, false},
+		{`abc (abc %v def)`, false},
+		{`abc (%v.)`, false},
+		{`abc (abc %v.)`, false},
+		{`abc (%v. abc)`, false},
+		{`abc (abc %v. def)`, false},
+		{`abc - abc%v`, false},
+		{`abc - abc%vdef`, false},
+		{`abc - %vabc`, false},
+		{`abc - %v`, true},
+		{`abc - abc %v`, false},
+		{`abc - %v abc`, false},
+		{`abc - abc %v def`, false},
+		{`abc - %v.`, false},
+		{`abc - abc %v.`, false},
+		{`abc - %v. abc`, false},
+		{`abc - abc %v. def`, false},
+	}
+	for _, group := range NotAltTermGroups {
+		for _, term := range group {
+			for _, c := range cases {
+				m := fmt.Sprintf(c.Format, term)
+				if NotAltExp.MatchString(m) != c.Want {
+					t.Errorf(`NotAltExp returned %v on "%v", wanted %v`, !c.Want, m, c.Want)
+				}
+			}
+		}
+	}
+}
+
 func TestReleaseGroupsByArtistNotEmpty(t *testing.T) {
 	client, stop := NewMGClient()
 	defer stop()

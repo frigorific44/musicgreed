@@ -24,7 +24,13 @@ var (
 			),
 		}, "|"),
 	)
-	AlmostAltExp *regexp.Regexp = regexp.MustCompile(`\s+[-‐-―]\s+.*|\s*\p{Ps}.+\p{Pe}`)
+	AlmostAltExp     *regexp.Regexp      = regexp.MustCompile(`\s+[-‐-―]\s+.*|\s*\p{Ps}.+\p{Pe}`)
+	NotAltTermGroups map[string][]string = map[string][]string{
+		"Latin": {"intro", "interlude"},
+	}
+	NotAltExp *regexp.Regexp = regexp.MustCompile(
+		fmt.Sprintf(`\s+[-‐-―]\s+(?:%[1]v)$|\s*\p{Ps}(?:%[1]v)\p{Pe}$`, strings.Join(NotAltTermGroups["Latin"], "|")),
+	)
 )
 
 type MGClient struct {
