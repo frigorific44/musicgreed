@@ -1,3 +1,6 @@
+# Go benchmark results
 bench-*.txt
+# Output log used during testing
+musicgreed.log
 .vscode
 dist/
