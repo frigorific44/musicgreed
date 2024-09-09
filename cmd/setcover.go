@@ -10,6 +10,7 @@ import (
 
 	"github.com/adrg/strutil"
 	"github.com/adrg/strutil/metrics"
+	"github.com/frigorific44/musicgreed/beets"
 	"github.com/frigorific44/musicgreed/concurrency"
 	"github.com/frigorific44/musicgreed/musicinfo"
 	"github.com/frigorific44/musicgreed/prompt"
@@ -51,12 +52,13 @@ func NewSetCoverCmd() *cobra.Command {
 				fmt.Println("Artist ID could not be retrieved")
 				return
 			}
+			scc.ArtistMBID = mbid
 			fmt.Println("Retrieving music...")
 			var status string
 			if scc.Official {
 				status = "official"
 			}
-			groups, err := musicinfo.ReleaseGroupsByArtist(client, mbid, status)
+			groups, err := musicinfo.ReleaseGroupsByArtist(client, scc.ArtistMBID, status)
 			if err != nil {
 				fmt.Println(err)
 				return
@@ -64,6 +66,9 @@ func NewSetCoverCmd() *cobra.Command {
 
 			filtered := filterBySecondaryType(groups, scc)
 			learnTracks(filtered, &scc)
+			slog.Debug(
+				"Set Cover Configuration",
+				"Config", scc)
 			// remove duplicates
 			var releases []mb2.Release
 			for _, rg := range filtered {
@@ -110,27 +115,31 @@ func NewSetCoverCmd() *cobra.Command {
 	)
 	cmd.Flags().Bool("dalt", false, "discard parenthesized alternate tracks (acoustic, remix, etc.)")
 	cmd.Flags().Bool("official", false, "only official releases (https://musicbrainz.org/doc/Release#Status)")
+	cmd.Flags().BoolP("remainder", "r", false, "requires a beets music library; calculates on the remainder after library tracks")
 
 	return cmd
 }
 
 type setCoverFlags struct {
-	DSec     []string
-	DAlt     bool
-	Official bool
+	DSec      []string
+	DAlt      bool
+	Official  bool
+	Remainder bool
 }
 
 type setCoverConfig struct {
 	setCoverFlags
 	TitleSub    map[string]string
 	TitleIgnore map[string]bool
+	ArtistMBID  mb2.MBID
 }
 
 func packageSetCoverFlags(cmd *cobra.Command) setCoverFlags {
 	dSec, _ := cmd.Flags().GetStringSlice("dsec")
 	dAlt, _ := cmd.Flags().GetBool("dalt")
 	official, _ := cmd.Flags().GetBool("official")
-	return setCoverFlags{DSec: dSec, DAlt: dAlt, Official: official}
+	remainder, _ := cmd.Flags().GetBool("remainder")
+	return setCoverFlags{DSec: dSec, DAlt: dAlt, Official: official, Remainder: remainder}
 }
 
 func artistMBID(client musicinfo.MGClient, query string) (mb2.MBID, error) {
@@ -371,6 +380,7 @@ func releaseTrackTitles(release mb2.Release, scc setCoverConfig) []string {
 // Cleans the title for comparability without changing the meaning
 func CleanTitle(title string) string {
 	title = strings.ToLower(title)
+	title = strings.ReplaceAll(title, "&", "and")
 	return strings.Map(func(r rune) rune {
 		switch r {
 		case '’':
@@ -388,6 +398,20 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 	subSets := make(map[string]map[string]bool)
 	ignore := make(map[string]bool)
 
+	// libraryIDs := make(map[mb2.MBID]bool)
+	if scc.Remainder {
+		beetsTracks, beetErr := beets.ArtistTrackTitles(scc.ArtistMBID)
+		slog.Debug(
+			"current beets library",
+			"ArtistID", scc.ArtistMBID,
+			"Error", beetErr,
+			"Size", len(beetsTracks))
+		for _, t := range beetsTracks {
+			// libraryIDs[t.ID] = true
+			ignore[t.Title] = true
+		}
+	}
+
 	titleSet := make(map[string]bool)
 	for _, rg := range groups {
 		for _, r := range rg.Releases {
@@ -403,6 +427,7 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 	metric.CaseSensitive = false
 	altTracks := make(map[string]bool)
 
+	// Process alternate tracks.
 	// Instead, check for existence of root in title set
 	for t := range titleSet {
 		var manual bool
@@ -472,12 +497,19 @@ func learnTracks(groups []mb2.ReleaseGroup, scc *setCoverConfig) {
 			"titles determined to be equivalent",
 			"set", m)
 		set := make([]string, 0, len(m))
+		var ignored bool
 		for el := range m {
 			set = append(set, el)
+			if ignore[el] {
+				ignored = true
+			}
 		}
 		slices.SortFunc(set, func(a, b string) int {
 			return -1 * cmp.Compare(len(a), len(b))
 		})
+		if ignored {
+			ignore[set[0]] = true
+		}
 		for _, el := range set {
 			sub[el] = set[0]
 		}
