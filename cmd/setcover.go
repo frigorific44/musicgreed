@@ -37,11 +37,14 @@ func NewSetCoverCmd() *cobra.Command {
 			"flags may help to filter out music tracks that aren't of concern, depending " +
 			"on desired thoroughness." +
 			"\n\nTo discard live and remixed releases:" +
-			"\n`musicgreed setcover --dsec=\"live,remix\" artist`" +
+			"\n\n`musicgreed setcover --dsec=\"live,remix\" artist`" +
 			"\n\nThe previous command can only discard whole releases tagged as " +
 			"mentioned. To discard individual tracks that are parenthesized as an " +
 			"alternate version:" +
-			"\n\n`musicgreed setcover --dalt artist`",
+			"\n\n`musicgreed setcover --dalt artist`" +
+			"\n\nIf you maintain your library with the beets library manager, you can exclude " +
+			"your collection from `setcover` with the remainder flag:" +
+			"\n\n`musicgreed setcover -r artist`",
 		Args: cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}

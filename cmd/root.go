@@ -10,7 +10,7 @@ import (
 // rootCmd represents the base command when called without any subcommands
 func NewRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Version: "v0.1.0",
+		Version: "v0.2.0",
 		Use:     "musicgreed",
 		Short:   "A command-line tool to aid in collecting music.",
 		Long: "MusicGreed aims to speed up efforts to build a complete digital music " +
