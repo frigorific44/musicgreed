@@ -19,25 +19,24 @@ const (
 
 var (
 	clockZero, _        = time.Parse(lengthLayout, "0:00")
-	trackFormat  string = fmt.Sprintf(trackFormatBase, "$mb_trackid", "$title", "$length", "$track")
-	shellCommand        = func(name string, arg ...string) commandExecutor { return exec.Command(name, arg...) }
+	trackFormat  string = fmt.Sprintf(trackFormatBase, "$mb_releasetrackid", "$title", "$length", "$track")
 )
-
-type commandExecutor interface {
-	Output() ([]byte, error)
-}
 
 func ArtistTrackTitles(id mb2.MBID) ([]mb2.Track, error) {
 	var tracks []mb2.Track
 	if _, err := exec.LookPath("beet"); err != nil {
-		return tracks, err
+		return tracks, fmt.Errorf(`beet executable not found: %w`, err)
 	}
-	cmd := shellCommand("beet", fmt.Sprintf(`ls -f '%s' 'mb_artistids:%s'`, trackFormat, id))
+	cmdStr := fmt.Sprintf(`ls -f '%s' mb_artistids:%s`, trackFormat, id)
+	cmd := exec.Command("beet", strings.Split(cmdStr, " ")...)
 	out, err := cmd.Output()
 	if err != nil {
-		return tracks, err
+		return tracks, fmt.Errorf(`command "%v" did not output cleanly: %w`, strings.Join(cmd.Args, " "), err)
 	}
 	tracks, err = unmarshalBeetsTracks(string(out))
+	if err != nil {
+		err = fmt.Errorf(`command "%v" did not unmarshal cleanly, %w`, strings.Join(cmd.Args, " "), err)
+	}
 	return tracks, err
 }
 
@@ -45,9 +44,13 @@ func unmarshalBeetsTracks(beetStr string) ([]mb2.Track, error) {
 	var tracks []mb2.Track
 	var combined error
 	for _, line := range strings.Split(string(beetStr), "\n") {
+		if line == "" {
+			continue
+		}
+		line = strings.Trim(line, "'")
 		var inter intermediateTrack
 		if err := json.Unmarshal([]byte(line), &inter); err != nil {
-			combined = errors.Join(combined, err)
+			combined = errors.Join(combined, fmt.Errorf(`problem unmarshaling line "%v": %w`, line, err))
 		} else {
 			inter.Length = parseLength(inter.LengthStr)
 			inter.Position = parsePosition(inter.PositionStr)

@@ -9,28 +9,10 @@ import (
 	mb2 "go.uploadedlobster.com/musicbrainzws2"
 )
 
-type mockCommandExecutor struct {
-	output string
-}
-
-func (m *mockCommandExecutor) Output() ([]byte, error) {
-	return []byte(m.output), nil
-}
-
 func TestArtistTrackTitles(t *testing.T) {
-	orig := shellCommand
-	defer func() { shellCommand = orig }()
-
-	shellCommand = func(name string, args ...string) commandExecutor {
-		return &mockCommandExecutor{
-			output: "{\"id\":\"4ec8865d-6ed8-4773-9d80-41974c36277c\",\"title\":\"Sunset\",\"length_str\":\"3:28\",\"position_str\":\"02\"}\n" +
-				"{\"id\":\"45ca462d-d6e6-4490-b650-43075822347a\",\"title\":\"Side by Side\",\"length_str\":\"3:37\",\"position_str\":\"03\"}",
-		}
-	}
-
-	tracks, err := ArtistTrackTitles(mb2.MBID("4ec8865d-6ed8-4773-9d80-41974c36277c"))
+	tracks, err := ArtistTrackTitles(mb2.MBID("8682866a-4f7a-43f5-83b2-06eabd0f2d4c"))
 	if err != nil {
-		t.Fatalf(`ArtistTrackTitles returned error: %e`, err)
+		t.Fatalf(`ArtistTrackTitles returned error: %v`, err.Error())
 	}
 	if len(tracks) < 2 {
 		t.Fatalf(`ArtistTrackTitles returned fewer tracks than expected: %+v`, tracks)
