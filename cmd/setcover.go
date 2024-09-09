@@ -47,12 +47,14 @@ func NewSetCoverCmd() *cobra.Command {
 			scc := setCoverConfig{setCoverFlags: packageSetCoverFlags(cmd)}
 			client, stop := musicinfo.NewMGClient()
 			defer stop()
+
 			mbid, idErr := artistMBID(client, args[0])
 			if idErr != nil {
 				fmt.Println("Artist ID could not be retrieved")
 				return
 			}
 			scc.ArtistMBID = mbid
+
 			fmt.Println("Retrieving music...")
 			var status string
 			if scc.Official {
@@ -64,6 +66,7 @@ func NewSetCoverCmd() *cobra.Command {
 				return
 			}
 
+			// Pre-processing
 			filtered := filterBySecondaryType(groups, scc)
 			learnTracks(filtered, &scc)
 			slog.Debug(
@@ -143,8 +146,8 @@ func packageSetCoverFlags(cmd *cobra.Command) setCoverFlags {
 }
 
 func artistMBID(client musicinfo.MGClient, query string) (mb2.MBID, error) {
-	if musicinfo.MBIDExp.MatchString(query) {
-		return mb2.MBID(query), nil
+	if id := mb2.MBID(query); id.IsValid() {
+		return id, nil
 	} else {
 		client.MBTick()
 		res, err := client.MBClient.SearchArtists(mb2.SearchFilter{Query: query}, mb2.DefaultPaginator())
